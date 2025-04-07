@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --background-svg: url('/images/background.svg'); /* Path to SVG */
+}
+
+/* Width of the scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Track (background behind the scrollbar) */
+::-webkit-scrollbar-track {
+  background: #1a1a1a; /* Dark background */
+  border-radius: 10px;
+}
+
+/* Handle (scroll thumb) */
+::-webkit-scrollbar-thumb {
+  background: #4D4D4D; /* Primary color */
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #6B06A8; /* Lighter purple on hover */
+}
+
+/* Firefox-specific scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4D4D4D #1a1a1a;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --background-svg: url('/images/background.svg'); /* Path to SVG */
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background) var(--background-svg) no-repeat center center;
+  background-size: cover; /* Adjust to your preference */
+  font-family: Arial, Helvetica, sans-serif;
+}
