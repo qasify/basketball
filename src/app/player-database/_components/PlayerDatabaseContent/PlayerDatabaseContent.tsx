@@ -11,8 +11,8 @@ import {
   AccordionTrigger,
 } from "@/components/Accordion";
 import Slider from "@/components/Slider";
-import { HiChevronDoubleDown } from "react-icons/hi2";
-import Button from "@/components/Button";
+// import { HiChevronDoubleDown } from "react-icons/hi2";
+// import Button from "@/components/Button";
 import PlayersTable from "../PlayersTable";
 import {
   getLeagues,
@@ -94,9 +94,10 @@ const PlayerDatabaseContent = () => {
         (player.name.toLowerCase().includes(searchValue.toLowerCase()) ||
           player.country?.toLowerCase().includes(searchValue.toLowerCase())) &&
         (!player.age ||
-          (player.age >= filters.ageRange[0] && player.age <= filters.ageRange[1])) &&
+          (player.age >= filters.ageRange[0] &&
+            player.age <= filters.ageRange[1])) &&
         (filters.countries.length === 0 ||
-          filters.countries.find(option => option.value===player.country))
+          filters.countries.find((option) => option.value === player.country))
       // &&
       // (selectedPositions.length === 0 ||
       //   player.position.some((pos) =>
@@ -136,10 +137,10 @@ const PlayerDatabaseContent = () => {
     }));
   };
 
-  const handleClearFilters = () => {
-    setSearchValue("");
-    setFilters(initialFilters);
-  };
+  // const handleClearFilters = () => {
+  //   setSearchValue("");
+  //   setFilters(initialFilters);
+  // };
 
   useEffect(() => {
     fetchLeagues();
@@ -179,7 +180,7 @@ const PlayerDatabaseContent = () => {
           parseInt(option.value),
           leagues
             .find((league) => league.id.toString() === option.value)
-            ?.seasons.sort((a, b) => b.season - a.season)[0]
+            ?.seasons.sort((a, b) => b.season - a.season)[1]
             .season.toString()
         )
       );
@@ -211,7 +212,7 @@ const PlayerDatabaseContent = () => {
         )
       );
       const playersResults = await Promise.all(playersPromises);
-      const allPlayers = playersResults.flat();
+      const allPlayers = playersResults.flat().sort((p1, p2) => p1.name.localeCompare(p2.name));
       setPlayers(allPlayers);
     } catch (err) {
       setError("Failed to fetch players");
@@ -608,7 +609,7 @@ const PlayerDatabaseContent = () => {
       </AccordionContainer>
 
       {/* filter actions */}
-      <div className="space-y-3">
+      {/* <div className="space-y-3">
         <h2 className="py-4 flex items-center gap-2 text-xl">
           <HiChevronDoubleDown size={20} />
           Adjustable Filters
@@ -624,14 +625,19 @@ const PlayerDatabaseContent = () => {
             className="!px-9 rounded w-[180px] border-searchBorder flex !justify-center !items-center bg-headerBg/30"
           />
         </div>
-      </div>
+      </div> */}
+      {filteredPlayers.length > 0 && (
+        <h2 className="text-md w-full text-right">
+          Players Count: <b>{filteredPlayers.length}</b>
+        </h2>
+      )}
 
       {error && (
         <div className="bg-red-50 text-red-500 p-4 rounded">{error}</div>
       )}
 
       <PlayersTable players={filteredPlayers} />
-      
+
       {isLoading && (
         <div className="flex justify-center">
           <p>Loading...</p>

@@ -48,7 +48,7 @@ const NoteModal = ({
   if (!isOpen || !player) return null;
 
   return (
-    <div className="fixed w-[100vw] h-[100vh] inset-0 flex items-center justify-center bg-black bg-opacity-40">
+    <div className="fixed w-[100vw] h-[100vh] inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
       <div
         ref={ref}
         className="backdrop-blur-[10px] p-5 rounded-lg w-[500px] bg-card-radial text-white shadow-lg relative flex flex-col gap-4"

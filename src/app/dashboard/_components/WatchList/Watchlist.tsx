@@ -1,5 +1,5 @@
 "use client";
-import React, { FC, MouseEvent, useState } from "react";
+import React, { FC, useState } from "react";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import { Player } from "@/_api/basketball-api";
@@ -9,17 +9,17 @@ import TooltipIconButton from "@/components/TooltipIconButton";
 import {
   FaEdit,
   // FaPlus,
-  FaStar,
 } from "react-icons/fa";
 import { TooltipProvider } from "@/components/Tooltip";
 import Note from "@/components/Note";
 import { watchListDB } from "@/_api/firebase-api";
 
-interface PlayerTableProps {
-  players: Player[];
-}
+const PlayersTable: FC = () => {
+  const [players, setPlayers] = useState<Player[]>([]);
+  watchListDB.getAll().then((p) => {
+    setPlayers(p as Player[]);
+  });
 
-const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<keyof Player | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -70,18 +70,6 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const handleAddToWatchList = async (
-    event: MouseEvent<HTMLDivElement>,
-    player: Player
-  ) => {
-    event.stopPropagation();
-    try {
-      await watchListDB.add(player);
-    } catch {
-      console.error("Error adding to watchlist");
-    }
-  };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setNotePlayer(null);
@@ -115,17 +103,12 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
               {/* <TooltipIconButton
                 tooltip="Add to team"
                 icon={<FaPlus className="text-white text-xs" size={10} />}
-                handleClick={() => {}}
+                handleClick={() => {}} 
               /> */}
               <TooltipIconButton
                 tooltip="Add note"
                 icon={<FaEdit className="text-white text-xs" size={10} />}
                 handleClick={() => handleNoteClick(player)}
-              />
-              <TooltipIconButton
-                tooltip="Add to watchlist"
-                icon={<FaStar className="text-white text-xs" size={10} />}
-                handleClick={(e) => handleAddToWatchList(e, player)}
               />
             </div>
           </TooltipProvider>
@@ -147,11 +130,19 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
         sortBy={sortBy}
         sortDirection={sortDirection}
       />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        handlePageChange={handlePageChange}
-      />
+      <div className="flex gap-4 justify-end items-center">
+        <Link
+          href="/watchlist"
+        >
+          View Full Watchlist
+        </Link>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          handlePageChange={handlePageChange}
+        />
+      </div>
+
       <Note
         player={notePlayer}
         isOpen={isModalOpen}

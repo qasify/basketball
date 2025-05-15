@@ -1,7 +1,7 @@
-'use client'
+"use client";
 import React, { useEffect, useState } from "react";
 import PlayerProfile from "./_components/PlayerProfile";
-import PlayerDetails from "./_components/PlayerDetails";
+// import PlayerDetails from "./_components/PlayerDetails";
 import { useParams } from "next/navigation";
 import { getPlayer, Player } from "@/_api/basketball-api";
 
@@ -27,7 +27,7 @@ const PlayerDatabase = () => {
           <PlayerProfile player={player} />
 
           {/* Tables here */}
-          <PlayerDetails />
+          {/* <PlayerDetails /> */}
         </>
       ) : (
         <div>Loading...</div>

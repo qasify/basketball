@@ -142,3 +142,18 @@ export const getPlayer = async (playerId: number): Promise<Player> => {
     throw error;
   }
 };
+
+
+export const searchPlayer = async (name: string): Promise<Player[]> => {
+  try {
+    const players = await api.get<Player[]>("/players", {
+      params: {
+        search: name,
+      },
+    });
+    return players;
+  } catch (error) {
+    console.error("Error fetching players:", error);
+    throw error;
+  }
+};

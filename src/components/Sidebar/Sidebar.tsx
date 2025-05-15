@@ -2,7 +2,7 @@
 import { appConstants } from "@/utils/constants/app";
 import React from "react";
 import NavItem from "./components/NavItem";
-import SupportBox from "./components/SupportBox";
+// import SupportBox from "./components/SupportBox";
 import UserProfile from "./components/UserProfile";
 import { bottomNavItems, navItems } from "@/utils/constants/navItems";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ const Sidebar = () => {
 
         <div className="flex flex-col gap-[6px]">
           {/* Support Box */}
-          <SupportBox />
+          {/* <SupportBox /> */}
 
           {/* Settings & Support */}
           <div className="flex flex-col gap-1">

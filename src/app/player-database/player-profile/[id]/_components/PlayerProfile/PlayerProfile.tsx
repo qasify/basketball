@@ -1,17 +1,26 @@
-"use client"
+"use client";
 import Image from "next/image";
 import Button from "@/components/Button";
 import { FaEdit } from "react-icons/fa";
 import { Player } from "@/_api/basketball-api";
+import { MouseEvent } from "react";
+import { watchListDB } from "@/_api/firebase-api";
 
 type PlayerProfileModalProps = {
   player: Player | null;
 };
 
-const PlayerProfile = ({
-  player,
-}: PlayerProfileModalProps) => {
-
+const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
+  const handleAddToWatchList = async (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    if (player) {
+      try {
+        await watchListDB.add(player);
+      } catch {
+        console.error("Error adding to watchlist");
+      }
+    }
+  };
 
   const TextItem = ({
     label,
@@ -42,7 +51,10 @@ const PlayerProfile = ({
       <div className="flex flex-col flex-1 gap-5 justify-between">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl">{player?.name}</h2>
-          <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />
+          <div className="flex gap-4">
+            <Button className="!p-2" onClick={handleAddToWatchList} label="Add to Watchlist"/>
+            <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />
+          </div>
         </div>
         <div className="flex flex-col flex-1 gap-2 justify-between">
           <TextItem label="Position" value={player?.position} />
@@ -51,7 +63,7 @@ const PlayerProfile = ({
           <TextItem label="Number" value={player?.number} />
           <TextItem label="Height" value={player?.height} />
           <TextItem label="Weight" value={player?.weight} />
-          <TextItem label="Salary" value={player?.salary} />
+          <TextItem label="Status" value={player?.salary} />
           <TextItem label="Contract" value={player?.contract} />
         </div>
       </div>

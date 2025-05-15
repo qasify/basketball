@@ -34,7 +34,7 @@ const TableHeader = ({
         {headerRenderer ? headerRenderer(label) : label}
         {isSortable && (
           <div className="flex flex-col items-center">
-            <FaSortUp
+            {/* <FaSortUp
               size={14}
               className={`transition-all ${
                 isSortActive && sortDirection === "asc"
@@ -49,7 +49,13 @@ const TableHeader = ({
                   ? "text-purple-500"
                   : "text-gray-500"
               }`}
-            />
+            /> */}
+            {isSortActive && sortDirection === "asc" && (
+              <FaSortUp size={14} className="transition-all text-gray-500" />
+            )}
+            {isSortActive && sortDirection === "desc" && (
+              <FaSortDown size={14} className="transition-all text-gray-500" />
+            )}
           </div>
         )}
       </div>

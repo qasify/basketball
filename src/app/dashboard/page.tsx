@@ -3,8 +3,9 @@ import Banner from "./_components/Banner";
 import { banner } from "./_utils/banners";
 import Matches from "./_components/Matches";
 import { sampleMatches } from "./_utils/matches";
-import DailyReaders from "./_components/DailyLeaders";
-import LatestNews from "./_components/LatestNews";
+import Watchlist from "./_components/WatchList";
+// import DailyReaders from "./_components/DailyLeaders";
+// import LatestNews from "./_components/LatestNews";
 
 // const data = [
 //   { date: "12 Dec", performance: 40, color: "#9320DE99" },
@@ -28,12 +29,13 @@ const Dashboard = () => {
           <WinLossChart wins={10} losses={3} />
         </div>
         <TeamRankings /> */}
-        <LatestNews />
+        {/* <LatestNews /> */}
+        <Watchlist/>
       </div>
       {/* right bar */}
-      <div className="flex flex-col flex-1 gap-6">
+      {/* <div className="flex flex-col flex-1 gap-6">
         <DailyReaders />
-      </div>
+      </div> */}
     </div>
   );
 };
