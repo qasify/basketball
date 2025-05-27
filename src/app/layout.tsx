@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+'use client';
+
 import { Poppins, Inter } from "next/font/google";
+import { usePathname } from "next/navigation";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import Header from "@/components/Header";
@@ -18,24 +20,22 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Basketball Manager",
-  description: "Basketball manager application",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
   return (
     <html lang="en">
       <body
-        className={`${poppins.className} ${inter.className} antialiased flex`}
+        className={`${poppins.className} ${inter.className} antialiased ${isAuthPage ? '' : 'flex'}`}
       >
-        <Sidebar />
-        <div className="flex flex-col h-[100vh] overflow-auto flex-1">
-          <Header />
+        {!isAuthPage && <Sidebar />}
+        <div className={`flex flex-col h-[100vh] overflow-auto ${isAuthPage ? 'w-full' : 'flex-1'}`}>
+          {!isAuthPage && <Header />}
           {children}
         </div>
       </body>

@@ -1,34 +1,39 @@
 "use client";
 
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent } from "react";
 import Image from "next/image";
 import { cn } from "@/utils/cn";
-import { IoMdAdd, IoMdRemove } from "react-icons/io";
-import Button from "@/components/Button";
-import { RiPushpin2Fill } from "react-icons/ri";
-import { FBPlayer, teamRosterDB, watchListDB } from "@/_api/firebase-api";
-import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+// import { IoMdAdd, IoMdRemove } from "react-icons/io";
+// import Button from "@/components/Button";
+// import { RiPushpin2Fill } from "react-icons/ri";
+import { FBPlayer, watchListDB } from "@/_api/firebase-api";
+import {
+  // FaEdit, FaPlus,
+  FaTrash,
+} from "react-icons/fa";
 import { Priority } from "@/types/Player";
 import TooltipIconButton from "@/components/TooltipIconButton";
 import { TooltipProvider } from "@/components/Tooltip";
-import Note from "@/components/Note";
+// import Note from "@/components/Note";
+import iso3166 from "iso-3166-1";
+import Link from "next/link";
 
-export interface Player {
-  id: string | number;
-  name: string;
-  type?: string;
-  status?: string;
-  team?: string;
-  position?: string;
-  age?: number;
-  country?: string;
-  image?: string;
-  number?: number;
-  height?: number;
-  weight?: number;
-  salary?: number;
-  contract?: string;
-}
+// export interface Player {
+//   id: string | number;
+//   name: string;
+//   type?: string;
+//   status?: string;
+//   team?: string;
+//   position?: string;
+//   age?: number;
+//   country?: string;
+//   image?: string;
+//   number?: number;
+//   height?: number;
+//   weight?: number;
+//   salary?: number;
+//   contract?: string;
+// }
 
 // const players: Player[] = [
 //   {
@@ -261,15 +266,9 @@ interface Props {
 const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
   const PLACEHOLDER_IMAGE =
     "https://img.freepik.com/premium-photo/basketball-player-logo-single-color-vector_1177187-50594.jpg";
-  const [expandedId, setExpandedId] = useState<number | string | null>(null); // First item opened by default
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [notePlayer, setNotePlayer] = useState<FBPlayer | null>(null);
 
-  // eslint-disable-next-line
-  const handleToggle = (id: number | string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
-  };
-
+  // const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
   const handlePriorityChange = async (player: FBPlayer, priority: Priority) => {
     try {
       if (player) {
@@ -301,165 +300,148 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
     }
   };
 
-  const handleAddToTeam = async (
-    event: MouseEvent<HTMLDivElement>,
-    player: FBPlayer
-  ) => {
-    event.stopPropagation();
-    try {
-      await teamRosterDB.add(player);
-      // handleRemove(event, player);
-      refreshPlayers();
-    } catch {
-      console.error("Error updating Priority");
-    }
-  };
+  // const handleAddToTeam = async (
+  //   event: MouseEvent<HTMLDivElement>,
+  //   player: FBPlayer
+  // ) => {
+  //   event.stopPropagation();
+  //   try {
+  //     await teamRosterDB.add(player);
+  //     // handleRemove(event, player);
+  //     refreshPlayers();
+  //   } catch {
+  //     console.error("Error updating Priority");
+  //   }
+  // };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setNotePlayer(null);
-  };
+  // const handleNoteClick = (player: FBPlayer) => {
+  //   // setSelectedPlayer(player);
+  //   // setIsModalOpen(true);
+  // };
 
-  const handleNoteClick = (player: FBPlayer) => {
-    setNotePlayer(player);
-    setIsModalOpen(true);
+  const getCountryAbbreviation = (countryName: string) => {
+    if (countryName === "USA") return "us";
+
+    const country = iso3166.whereCountry(countryName);
+    return country ? country.alpha2 : "";
   };
 
   return (
-    <div className="py-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {players.map((player) => {
-        const isExpanded = player.id === expandedId;
+    <div className="flex flex-col gap-4 pt-4">
+      {players.map((player) => (
+        <div
+          key={player.id}
+          className="relative border border-borderDarkPurple rounded-lg bg-transparent transition-all p-4 cursor-pointer"
+        >
+          <div className="flex items-start gap-4">
+            <Image
+              src={player?.image ?? PLACEHOLDER_IMAGE}
+              alt={player.name}
+              width={60}
+              height={60}
+              className="rounded-full border-2 border-borderDarkPurple"
+            />
+            <div className="flex flex-col flex-1">
+              <div className="flex justify-between items-start w-full mb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-semibold text-white">
+                      {player.name}
+                    </h3>
 
-        return (
-          <div
-            key={player.id}
-            className={cn(
-              "relative border border-borderDarkPurple rounded-lg bg-transparent text-white transition-all p-3",
-              isExpanded && "bg-tileBackground"
-            )}
-          >
-            {/* <button
-              onClick={() => handleToggle(player?.id ?? "")}
-              className="absolute text-purple-400 font-bold right-5"
-            >
-              {isExpanded ? <IoMdRemove size={22} /> : <IoMdAdd size={22} />}
-            </button> */}
-            <div className="flex items-center gap-3">
-              <Image
-                src={player?.image ?? PLACEHOLDER_IMAGE}
-                alt={player.name}
-                width={isExpanded ? 85 : 50}
-                height={isExpanded ? 85 : 50}
-                className="rounded border border-borderDarkPurple"
-              />
-              <div className="flex flex-row justify-between w-full">
-                {/* <div className="flex gap-2">
-                  <span
-                    className={cn(
-                      "text-[8px] border border-borderDarkPurple bg-borderPurple/20 px-2 py-0.5 rounded",
-                      isExpanded && "text-lg"
-                    )}
-                  >
-                    {player.status}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[8px] border border-borderDarkPurple bg-borderPurple/20 px-2 py-0.5 rounded",
-                      isExpanded && "text-lg"
-                    )}
-                  >
-                    {player.type}
-                  </span>
-                </div> */}
-                <h3
-                  className={cn(
-                    "text-lg font-bold text-wrap break-words",
-                    isExpanded && "text-[28px]"
-                  )}
-                >
-                  {player.name}
-                </h3>
-                <TooltipProvider>
-                  <div className="flex gap-2 items-center">
-                    <Button
-                      className="!py-1 !px-2 rounded bg-borderPurple/30 mr-4"
-                      title={player.priority ?? "Medium"}
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 text-xs rounded-full cursor-pointer",
+                        player.priority === "High"
+                          ? "bg-red-500/20 text-red-400"
+                          : player.priority === "Medium"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : player.priority === "Low"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-gray/20 text-gray"
+                      )}
                       onClick={() =>
                         handlePriorityChange(
                           player,
                           player.priority ?? "Medium"
                         )
                       }
-                    />
-                    <TooltipIconButton
-                      icon={<FaPlus className="text-white text-xs" size={10} />}
+                    >
+                      •{player.priority && " "}
+                      {player.priority}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {player.country && (
+                      <Image
+                        src={`https://flagcdn.com/w20/${getCountryAbbreviation(
+                          player.country
+                        ).toLowerCase()}.png`}
+                        width={20}
+                        height={15}
+                        alt={getCountryAbbreviation(
+                          player.country
+                        ).toLowerCase()}
+                      />
+                    )}
+                    <span className="text-sm font-bold">{player.position}</span>
+                    <span className="text-sm">•</span>
+                    <span className="text-sm">{player.country}</span>
+                    <span className="text-sm">•</span>
+                    <span className="text-sm">{player.age}</span>
+                  </div>
+                </div>
+                <TooltipProvider>
+                  <div className="flex gap-2">
+                    {/* <TooltipIconButton
+                      icon={<FaPlus className="text-white" size={14} />}
                       handleClick={(e) => handleAddToTeam(e, player)}
                       tooltip="Add to team"
-                    />
-                    <TooltipIconButton
-                      icon={<FaEdit className="text-white text-xs" size={10} />}
+                    /> */}
+                    {/* <TooltipIconButton
+                      icon={<FaEdit className="text-white" size={14} />}
                       handleClick={() => handleNoteClick(player)}
                       tooltip="Add note"
-                    />
+                    /> */}
                     <TooltipIconButton
-                      icon={
-                        <FaTrash className="text-white text-xs" size={10} />
-                      }
+                      icon={<FaTrash className="text-white" size={14} />}
                       handleClick={(e) => handleRemove(e, player)}
-                      tooltip="Remove from team"
+                      tooltip="Remove from watchlist"
                     />
                   </div>
                 </TooltipProvider>
               </div>
-            </div>
 
-            {isExpanded && (
-              <div className="mt-5">
-                <div className="flex flex-col gap-3 text-lg">
-                  <div className="flex items-center justify-between border-b border-tileBackground">
-                    <p className="text-gray-400">Team</p>
-                    <p>{player.team}</p>
+              {player.notes &&
+                player.notes.map((note, index) => (
+                  <div className="mt-3 text-sm text-gray-400 border border-borderPurple p-2 rounded" key={index}>
+                    {note.note}
                   </div>
-                  <div className="flex items-center justify-between border-b border-tileBackground">
-                    <p className="text-gray-400">Position</p>
-                    <p>{player.position}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-tileBackground">
-                    <p className="text-gray-400">Age</p>
-                    <p>{player.age}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-tileBackground">
-                    <p className="text-gray-400">Country</p>
-                    <p>{player.country}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-gray-400">Actions</p>
-                    <div className="flex gap-2 items-center">
-                      <Button
-                        icon={<IoMdAdd size={18} />}
-                        className="!p-2 h-[30px] w-[30px] flex justify-center items-center rounded"
-                      />
-                      <Button
-                        icon={<IoMdRemove size={18} />}
-                        className="!p-2 h-[30px] w-[30px] flex justify-center items-center rounded"
-                      />
-                      <Button
-                        icon={<RiPushpin2Fill size={18} />}
-                        className="!p-2 h-[30px] w-[30px] flex justify-center items-center rounded"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+                ))}
+            </div>
           </div>
-        );
-      })}
-      <Note
-        player={notePlayer}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
+        </div>
+      ))}
+      {players.length === 0 && (
+        <div className="items-center w-full flex flex-col gap-2">
+          No players found. Try adjusting filters or adding players from the
+          Player Database
+          <Link
+            href="player-database"
+            className="flex justify-between gap-[10px] bg-borderPurple/30 items-center py-[10px] px-[15px] border border-borderPurple cursor-pointer"
+          >
+            Browse player database
+          </Link>
+        </div>
+      )}
+      {/* // {isModalOpen && selectedPlayer && (
+      //   <Note
+      //     isOpen={isModalOpen}
+      //     onClose={() => setIsModalOpen(false)}
+      //     playerId={selectedPlayer.id}
+      //     onSave={refreshPlayers}
+      //   />
+      // )} */}
     </div>
   );
 };

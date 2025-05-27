@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { appConstants } from "@/utils/constants/app";
 import React from "react";
 import NavItem from "./components/NavItem";
@@ -6,8 +6,11 @@ import NavItem from "./components/NavItem";
 import UserProfile from "./components/UserProfile";
 import { bottomNavItems, navItems } from "@/utils/constants/navItems";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { authDB } from "@/_api/firebase-api";
 
 const Sidebar = () => {
+  const { user } = useAuth();
   const pathname = usePathname();
   const pathList = pathname?.split("/") || [];
   const pathName = pathList[pathList.length - 1] ?? "";
@@ -63,7 +66,11 @@ const Sidebar = () => {
 
       {/* User Profile */}
       <div className="flex p-3 pt-0">
-        <UserProfile name="Wei Chen" email="wei@gmail.com" />
+        <UserProfile
+          name={user?.email?.split("@")[0] ?? ""}
+          email={user?.email ?? ""}
+          handleLogout={authDB.logout}
+        />
       </div>
     </div>
   );
