@@ -27,11 +27,11 @@ const NoteModal = ({
   }, [isOpen, player]);
 
   const fetchNote = async () => {
-    if (player) {
-      setNote("");
-      const fetchedNote = await notesDB.get(player.id);
-      setNote(fetchedNote);
-    }
+    // if (player) {
+    //   setNote("");
+    //   const fetchedNote = await notesDB.get(player.id);
+    //   setNote(fetchedNote);
+    // }
   };
 
   const handleSave = async () => {
