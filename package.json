@@ -2,11 +2,13 @@
   "name": "basketball",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run preprocess-data && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "preprocess-data": "node scripts/preprocess-data.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",

@@ -1,0 +1,1399 @@
+[
+  {
+    "id": 1,
+    "name": "BCL-Eu",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2005,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2006,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2004,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "All Leagues",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2003,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2004,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Korisliiga",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "KBL",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2005,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2006,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Euroleague",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "G Pro A",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "HEBA A1",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "ACB",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "LNA",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2006,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "LNBP",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Liga A",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2006,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2005,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Basketligan",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2006,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Youth BCL",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      }
+    ]
+  }
+]
