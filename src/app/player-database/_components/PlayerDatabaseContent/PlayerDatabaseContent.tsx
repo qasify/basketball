@@ -18,10 +18,10 @@ import {
   getLeagues,
   getPlayers,
   getTeams,
-  League,
-  Player,
-  Team,
-} from "@/_api/basketball-api";
+  type League,
+  type Player,
+  type Team,
+} from "@/_api/excel-league-api";
 
 const MultiSelect = dynamic(() => import("@/components/Select/MultiSelect"), {
   ssr: false,
@@ -58,7 +58,7 @@ type Filters = {
 
 const initialFilters: Filters = {
   countries: [],
-  leagues: [{ label: "EuroLeague", value: "120" }],
+  leagues: [],
   teams: [],
   positions: [],
   height: {},
@@ -146,6 +146,21 @@ const PlayerDatabaseContent = () => {
     fetchLeagues();
   }, []);
 
+  // Set "All Leagues" as default selection when leagues are loaded
+  useEffect(() => {
+    if (leagues.length > 0 && filters.leagues.length === 0) {
+      const allLeaguesOption = leagues.find(
+        (league) => league.name.toLowerCase() === "all leagues"
+      );
+      if (allLeaguesOption) {
+        handleFilterChange("leagues", [
+          { label: allLeaguesOption.name, value: allLeaguesOption.id.toString() },
+        ]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leagues]);
+
   useEffect(() => {
     if (filters.leagues.length > 0 && leagues.length > 0) {
       fetchTeamsForSelectedLeagues();
@@ -176,13 +191,7 @@ const PlayerDatabaseContent = () => {
     setError(null);
     try {
       const teamsPromises = filters.leagues.map((option) =>
-        getTeams(
-          parseInt(option.value),
-          leagues
-            .find((league) => league.id.toString() === option.value)
-            ?.seasons.sort((a, b) => b.season - a.season)[1]
-            .season.toString()
-        )
+        getTeams(parseInt(option.value))
       );
       const teamsResults = await Promise.all(teamsPromises);
       const allTeams = teamsResults.flat();

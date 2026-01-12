@@ -105,6 +105,29 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
     { label: "Age", key: "age", isSortable: true },
     { label: "Country", key: "country", isSortable: true },
     { label: "Team", key: "team", isSortable: true },
+    { label: "Season", key: "season", isSortable: true },
+    { label: "GP", key: "gamesPlayed", isSortable: true },
+    { label: "GS", key: "gamesStarted", isSortable: true },
+    { label: "MIN", key: "minutesPerGame", isSortable: true },
+    { label: "PTS", key: "pointsPerGame", isSortable: true },
+    { label: "REB", key: "reboundsPerGame", isSortable: true },
+    { label: "AST", key: "assistsPerGame", isSortable: true },
+    { label: "STL", key: "stealsPerGame", isSortable: true },
+    { label: "BLK", key: "blocksPerGame", isSortable: true },
+    { label: "TOV", key: "turnoversPerGame", isSortable: true },
+    { label: "TS%", key: "tsPercent", isSortable: true },
+    { label: "eFG%", key: "efgPercent", isSortable: true },
+    { label: "ORB%", key: "orbPercent", isSortable: true },
+    { label: "DRB%", key: "drbPercent", isSortable: true },
+    { label: "TRB%", key: "trbPercent", isSortable: true },
+    { label: "AST%", key: "astPercent", isSortable: true },
+    { label: "TOV%", key: "tovPercent", isSortable: true },
+    { label: "STL%", key: "stlPercent", isSortable: true },
+    { label: "BLK%", key: "blkPercent", isSortable: true },
+    { label: "USG%", key: "usgPercent", isSortable: true },
+    { label: "ORtg", key: "offensiveRating", isSortable: true },
+    { label: "DRtg", key: "defensiveRating", isSortable: true },
+    { label: "PER", key: "playerEfficiencyRating", isSortable: true },
     {
       label: "Action",
       key: "action",
@@ -135,12 +158,12 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
   ];
 
   return (
-    <div className="mt-8 space-y-5">
+    <div className="mt-8 space-y-5 overflow-x-auto">
       <Table
         columns={playerColumns}
         data={paginatedPlayers}
-        className="border-none rounded-lg"
-        tableClass=""
+        className="border-none rounded-lg min-w-full"
+        tableClass="min-w-max"
         headerClass="bg-borderPurple text-white"
         bodyClass="divide-y divide-transparent"
         onSort={handleSort}

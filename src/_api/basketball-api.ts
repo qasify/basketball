@@ -57,6 +57,30 @@ export interface Player {
   image?: string;
   height?: string;
   weight: string;
+  // Advanced / per-game stats (primarily populated from Excel data)
+  season?: string;
+  gamesPlayed?: number; // GP
+  gamesStarted?: number; // GS
+  minutesPerGame?: number;
+  pointsPerGame?: number;
+  reboundsPerGame?: number;
+  assistsPerGame?: number;
+  stealsPerGame?: number;
+  blocksPerGame?: number;
+  turnoversPerGame?: number;
+  tsPercent?: number; // TS%
+  efgPercent?: number; // eFG%
+  orbPercent?: number; // ORB%
+  drbPercent?: number; // DRB%
+  trbPercent?: number; // TRB%
+  astPercent?: number; // AST%
+  tovPercent?: number; // TOV%
+  stlPercent?: number; // STL%
+  blkPercent?: number; // BLK%
+  usgPercent?: number; // USG%
+  offensiveRating?: number; // ORtg
+  defensiveRating?: number; // DRtg
+  playerEfficiencyRating?: number; // PER
 }
 
 export const getLeagues = async (): Promise<League[]> => {
