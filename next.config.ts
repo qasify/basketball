@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   images: {
-    domains: ['flagcdn.com', 'img.freepik.com'],
     remotePatterns: [
       {
         protocol: "http",
@@ -12,11 +11,17 @@ const nextConfig: NextConfig = {
         port: "3000", // Add the port if you're running on localhost with a port
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "flagcdn.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.freepik.com",
+        pathname: "/**",
+      },
     ],
-  },
-  i18n: {
-    locales: ["en", "es", "fr"],
-    defaultLocale: "en",
   },
   async rewrites() {
     return [];
