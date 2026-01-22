@@ -39,26 +39,12 @@ export interface Team {
   };
 }
 
-export interface Player {
-  id: number;
-  name: string;
-  number?: string;
-  position?: string;
-  age?: number;
-  country?: string;
-  team?: string;
-  photo?: string;
-  isInWatchlist?: boolean;
-  isInTeam?: boolean;
-  priority?: Priority;
-  pinned?: boolean;
-  salary?: string;
-  contract?: string;
-  image?: string;
-  height?: string;
-  weight: string;
+export interface PlayerSeason {
+  id: number; // Unique ID for this player-season combination
+  season: string;
+  team: string;
+  league: string;
   // Advanced / per-game stats (primarily populated from Excel data)
-  season?: string;
   gamesPlayed?: number; // GP
   gamesStarted?: number; // GS
   minutesPerGame?: number;
@@ -81,6 +67,26 @@ export interface Player {
   offensiveRating?: number; // ORtg
   defensiveRating?: number; // DRtg
   playerEfficiencyRating?: number; // PER
+}
+
+export interface Player {
+  id: number;
+  name: string;
+  number?: string;
+  position?: string;
+  age?: number;
+  country?: string;
+  photo?: string;
+  isInWatchlist?: boolean;
+  isInTeam?: boolean;
+  priority?: Priority;
+  pinned?: boolean;
+  salary?: string;
+  contract?: string;
+  image?: string;
+  height?: string;
+  weight?: string;
+  seasons?: PlayerSeason[]; // All seasons for this player
 }
 
 export const getLeagues = async (): Promise<League[]> => {
@@ -154,15 +160,30 @@ export const getPlayers = async (
 };
 
 export const getPlayer = async (playerId: number): Promise<Player> => {
+  // Since we're now using grouped players from excel data,
+  // we need to search through all teams to find the player
+  // This is a temporary solution - in a real app, you'd want to index players by ID
   try {
-    const player = await api.get<Player[]>("/players", {
-      params: {
-        id: playerId.toString(),
-      },
-    });
-    return player[0];
+    const { getLeagues, getTeams, getPlayers } = await import("./excel-league-api");
+
+    const leagues = await getLeagues();
+
+    for (const league of leagues) {
+      const teams = await getTeams(league.id);
+
+      for (const team of teams) {
+        const players = await getPlayers(team.id);
+
+        const foundPlayer = players.find(player => player.id === playerId);
+        if (foundPlayer) {
+          return foundPlayer;
+        }
+      }
+    }
+
+    throw new Error(`Player with ID ${playerId} not found`);
   } catch (error) {
-    console.error("Error fetching players:", error);
+    console.error("Error fetching player:", error);
     throw error;
   }
 };

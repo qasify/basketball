@@ -97,12 +97,11 @@ const PlayerDatabaseContent = () => {
           (player.age >= filters.ageRange[0] &&
             player.age <= filters.ageRange[1])) &&
         (filters.countries.length === 0 ||
-          filters.countries.find((option) => option.value === player.country))
-      // &&
-      // (selectedPositions.length === 0 ||
-      //   player.position.some((pos) =>
-      //     selectedPositions.includes(pos)
-      //   ))
+          filters.countries.find((option) => option.value === player.country)) &&
+        (filters.positions.length === 0 ||
+          filters.positions.find((option) => option.value === player.position))
+      // Additional season-based filters can be added here if needed
+      // For now, basic filters work on player level
     );
   }, [filters, players, searchValue]);
 
