@@ -86,7 +86,7 @@ const PlayersTable: FC = () => {
       key: "name",
       isSortable: true,
       cellRenderer: (val, row) => (
-        <Link href={`/player-database/player-profile/${row.id}`}>{val}</Link>
+        <Link href={`/player-database/player-profile/${row.id}`}>{String(val)}</Link>
       ),
     },
     { label: "Position", key: "position", isSortable: true },

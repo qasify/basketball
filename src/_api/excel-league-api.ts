@@ -16,6 +16,30 @@ type InternalTeam = ApiTeam & {
 type InternalPlayer = ApiPlayer & {
   leagueId: number;
   teamId: number;
+  season?: string;
+  // Statistical properties from Excel data
+  gamesPlayed?: number;
+  gamesStarted?: number;
+  minutesPerGame?: number;
+  pointsPerGame?: number;
+  reboundsPerGame?: number;
+  assistsPerGame?: number;
+  stealsPerGame?: number;
+  blocksPerGame?: number;
+  turnoversPerGame?: number;
+  tsPercent?: number;
+  efgPercent?: number;
+  orbPercent?: number;
+  drbPercent?: number;
+  trbPercent?: number;
+  astPercent?: number;
+  tovPercent?: number;
+  stlPercent?: number;
+  blkPercent?: number;
+  usgPercent?: number;
+  offensiveRating?: number;
+  defensiveRating?: number;
+  playerEfficiencyRating?: number;
 };
 
 let leaguesCache: League[] | null = null;
@@ -73,7 +97,7 @@ export const getPlayers = async (
   await ensureLoaded();
 
   // Group players by unique identifier (name + country only, not age since it changes)
-  const playerMap = new Map<string, Player & { seasons: PlayerSeason[] }>();
+  const playerMap = new Map<string, Player & { seasons: PlayerSeason[]; season?: string }>();
 
   (playersCache ?? [])
     .filter((player) => player.teamId === teamId)

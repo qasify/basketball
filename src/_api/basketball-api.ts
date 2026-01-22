@@ -86,6 +86,7 @@ export interface Player {
   image?: string;
   height?: string;
   weight?: string;
+  team?: string;
   seasons?: PlayerSeason[]; // All seasons for this player
 }
 

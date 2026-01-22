@@ -98,7 +98,7 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
       key: "name",
       isSortable: true,
       cellRenderer: (val, row) => (
-        <Link href={`/player-database/player-profile/${row.id}`}>{val}</Link>
+        <Link href={`/player-database/player-profile/${row.id}`}>{String(val)}</Link>
       ),
     },
     { label: "Position", key: "position", isSortable: true },
@@ -110,7 +110,7 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
       label: "Seasons Played",
       key: "seasons",
       isSortable: false,
-      cellRenderer: (val) => val?.length || 0,
+      cellRenderer: (val) => (Array.isArray(val) ? val.length : 0),
     },
     {
       label: "Action",
