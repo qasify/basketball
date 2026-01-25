@@ -16,7 +16,7 @@ import Slider from "@/components/Slider";
 import PlayersTable from "../PlayersTable";
 import {
   getLeagues,
-  getPlayers,
+  getPlayersByTeamIds,
   getTeams,
   type League,
   type Player,
@@ -189,16 +189,21 @@ const PlayerDatabaseContent = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const teamsPromises = filters.leagues.map((option) =>
-        getTeams(parseInt(option.value))
-      );
+      // If "All Leagues" (id 0) is selected, only fetch all teams to avoid duplicates
+      const hasAllLeagues = filters.leagues.some((o) => o.value === "0");
+      const toFetch = hasAllLeagues
+        ? [filters.leagues.find((o) => o.value === "0")!]
+        : filters.leagues;
+      const teamsPromises = toFetch.map((o) => getTeams(parseInt(o.value)));
       const teamsResults = await Promise.all(teamsPromises);
       const allTeams = teamsResults.flat();
       if (allTeams.length > 0) {
         setTeams(allTeams);
-        handleFilterChange("teams", [
-          { label: allTeams[0].name, value: allTeams[0].id.toString() },
-        ]);
+        const useAllTeams =
+          allTeams.length > 50 || hasAllLeagues;
+        handleFilterChange("teams", useAllTeams
+          ? [{ label: "All Teams", value: "ALL" }]
+          : [{ label: allTeams[0].name, value: allTeams[0].id.toString() }]);
       }
     } catch (err) {
       setError("Failed to fetch teams");
@@ -212,16 +217,18 @@ const PlayerDatabaseContent = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const playersPromises = filters.teams.map((option) =>
-        getPlayers(
-          parseInt(option.value),
-          teams.find((t) => t.id.toString() === option.value)?.season,
-          teams.find((t) => t.id.toString() === option.value)?.name
-        )
-      );
-      const playersResults = await Promise.all(playersPromises);
-      const allPlayers = playersResults.flat().sort((p1, p2) => p1.name.localeCompare(p2.name));
-      setPlayers(allPlayers);
+      const useAllTeams = filters.teams.some((o) => o.value === "ALL");
+      const teamIds = useAllTeams
+        ? teams.map((t) => t.id)
+        : filters.teams
+            .filter((o) => o.value !== "ALL")
+            .map((o) => parseInt(o.value, 10));
+      if (teamIds.length === 0) {
+        setPlayers([]);
+        return;
+      }
+      const allPlayers = await getPlayersByTeamIds(teamIds);
+      setPlayers(allPlayers.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
       setError("Failed to fetch players");
       console.error(err);
@@ -319,10 +326,13 @@ const PlayerDatabaseContent = () => {
               <MultiSelect
                 placeholder="Select Team..."
                 value={filters.teams}
-                options={teams.map((team) => ({
-                  label: team.name,
-                  value: team.id.toString(),
-                }))}
+                options={[
+                  { label: "All Teams", value: "ALL" },
+                  ...teams.map((team) => ({
+                    label: team.name,
+                    value: team.id.toString(),
+                  })),
+                ]}
                 className="min-w-full"
                 onValueChange={(values) => handleFilterChange("teams", values)}
                 isMulti

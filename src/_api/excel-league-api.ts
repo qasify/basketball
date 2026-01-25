@@ -70,104 +70,123 @@ const ensureLoaded = async () => {
   }
 };
 
+const ALL_LEAGUES_ID = 0;
+
 export const getLeagues = async (): Promise<League[]> => {
   await ensureLoaded();
-  return leaguesCache ?? [];
+  const list = leaguesCache ?? [];
+  const allLeagues: League = {
+    id: ALL_LEAGUES_ID,
+    name: 'All Leagues',
+    type: 'League',
+    logo: '',
+    country: { id: 0, name: '', code: '', flag: '' },
+    seasons: [],
+  };
+  return [allLeagues, ...list];
 };
 
 export const getTeams = async (leagueId: number): Promise<Team[]> => {
   await ensureLoaded();
-  return (teamsCache ?? [])
-    .filter((team) => team.leagueId === leagueId)
-    .map((team) => {
-      // Strip internal leagueId before exposing to callers
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { leagueId: _ignored, ...rest } = team;
-      return rest as Team;
+  const list = teamsCache ?? [];
+  const filtered = leagueId === ALL_LEAGUES_ID
+    ? list
+    : list.filter((team) => team.leagueId === leagueId);
+  return filtered.map((team) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { leagueId: _ignored, ...rest } = team;
+    return rest as Team;
+  });
+};
+
+function mergePlayerRows(rows: InternalPlayer[]): Player[] {
+  const playerMap = new Map<string, Player & { seasons: PlayerSeason[]; season?: string }>();
+
+  for (const player of rows) {
+    const playerKey = `${player.name}-${player.country || 'unknown'}`;
+
+    if (!playerMap.has(playerKey)) {
+      const { leagueId: _l, teamId: _t, ...rest } = player;
+      playerMap.set(playerKey, { ...rest, seasons: [] });
+    }
+
+    const u = playerMap.get(playerKey)!;
+    if (player.position && !u.position) u.position = player.position;
+    if (player.height && !u.height) u.height = player.height;
+    if (player.weight && (!u.weight || u.weight === '')) u.weight = player.weight;
+    if (player.number && !u.number) u.number = player.number;
+    if (player.salary && !u.salary) u.salary = player.salary;
+    if (player.contract && !u.contract) u.contract = player.contract;
+
+    const currYear = player.season ? parseInt(String(player.season).split('-')[0], 10) || 0 : 0;
+    const existYear = u.season ? parseInt(String(u.season).split('-')[0], 10) || 0 : 0;
+    if (currYear > existYear && player.age != null) {
+      u.age = player.age;
+      u.season = player.season;
+    }
+
+    const league = leaguesCache?.find((l) => l.id === player.leagueId);
+    u.seasons!.push({
+      id: player.id,
+      season: player.season || '',
+      team: player.team || '',
+      league: league?.name || '',
+      gamesPlayed: player.gamesPlayed,
+      gamesStarted: player.gamesStarted,
+      minutesPerGame: player.minutesPerGame,
+      pointsPerGame: player.pointsPerGame,
+      reboundsPerGame: player.reboundsPerGame,
+      assistsPerGame: player.assistsPerGame,
+      stealsPerGame: player.stealsPerGame,
+      blocksPerGame: player.blocksPerGame,
+      turnoversPerGame: player.turnoversPerGame,
+      tsPercent: player.tsPercent,
+      efgPercent: player.efgPercent,
+      orbPercent: player.orbPercent,
+      drbPercent: player.drbPercent,
+      trbPercent: player.trbPercent,
+      astPercent: player.astPercent,
+      tovPercent: player.tovPercent,
+      stlPercent: player.stlPercent,
+      blkPercent: player.blkPercent,
+      usgPercent: player.usgPercent,
+      offensiveRating: player.offensiveRating,
+      defensiveRating: player.defensiveRating,
+      playerEfficiencyRating: player.playerEfficiencyRating,
     });
+  }
+
+  return Array.from(playerMap.values());
+}
+
+export const getPlayersByTeamIds = async (teamIds: number[]): Promise<Player[]> => {
+  await ensureLoaded();
+  if (teamIds.length === 0) return [];
+  const set = new Set(teamIds);
+  const rows = (playersCache ?? []).filter((p) => set.has(p.teamId));
+  return mergePlayerRows(rows);
 };
 
 export const getPlayers = async (
   teamId: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _season?: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _teamName?: string
 ): Promise<Player[]> => {
+  return getPlayersByTeamIds([teamId]);
+};
+
+export const getPlayerById = async (id: number): Promise<Player> => {
   await ensureLoaded();
-
-  // Group players by unique identifier (name + country only, not age since it changes)
-  const playerMap = new Map<string, Player & { seasons: PlayerSeason[]; season?: string }>();
-
-  (playersCache ?? [])
-    .filter((player) => player.teamId === teamId)
-    .forEach((player) => {
-      // Create unique key for player identification (name + country)
-      const playerKey = `${player.name}-${player.country || 'unknown'}`;
-
-      if (!playerMap.has(playerKey)) {
-        // Create new unique player - collect best available data across seasons
-        const { leagueId: _ignoredLeague, teamId: _ignoredTeam, ...playerData } = player;
-        playerMap.set(playerKey, {
-          ...playerData,
-          seasons: []
-        });
-      }
-
-      // Update player with most complete information from all seasons
-      const uniquePlayer = playerMap.get(playerKey)!;
-
-      // Update basic info - prefer non-null values
-      if (player.position && !uniquePlayer.position) uniquePlayer.position = player.position;
-      if (player.height && !uniquePlayer.height) uniquePlayer.height = player.height;
-      if (player.weight && (!uniquePlayer.weight || uniquePlayer.weight === '')) uniquePlayer.weight = player.weight;
-      if (player.number && !uniquePlayer.number) uniquePlayer.number = player.number;
-      if (player.salary && !uniquePlayer.salary) uniquePlayer.salary = player.salary;
-      if (player.contract && !uniquePlayer.contract) uniquePlayer.contract = player.contract;
-
-      // Use the most recent age (highest season year)
-      const currentSeasonYear = player.season ? parseInt(player.season.split('-')[0]) || 0 : 0;
-      const existingSeasonYear = uniquePlayer.season ? parseInt(uniquePlayer.season.split('-')[0]) || 0 : 0;
-      if (currentSeasonYear > existingSeasonYear && player.age) {
-        uniquePlayer.age = player.age;
-        uniquePlayer.season = player.season; // Keep track of latest season
-      }
-
-      // Add season data to the player
-      const league = leaguesCache?.find(l => l.id === player.leagueId);
-      const seasonData: PlayerSeason = {
-        id: player.id, // Use original player ID as season ID for now
-        season: player.season || '',
-        team: player.team || '',
-        league: league?.name || '',
-        gamesPlayed: player.gamesPlayed,
-        gamesStarted: player.gamesStarted,
-        minutesPerGame: player.minutesPerGame,
-        pointsPerGame: player.pointsPerGame,
-        reboundsPerGame: player.reboundsPerGame,
-        assistsPerGame: player.assistsPerGame,
-        stealsPerGame: player.stealsPerGame,
-        blocksPerGame: player.blocksPerGame,
-        turnoversPerGame: player.turnoversPerGame,
-        tsPercent: player.tsPercent,
-        efgPercent: player.efgPercent,
-        orbPercent: player.orbPercent,
-        drbPercent: player.drbPercent,
-        trbPercent: player.trbPercent,
-        astPercent: player.astPercent,
-        tovPercent: player.tovPercent,
-        stlPercent: player.stlPercent,
-        blkPercent: player.blkPercent,
-        usgPercent: player.usgPercent,
-        offensiveRating: player.offensiveRating,
-        defensiveRating: player.defensiveRating,
-        playerEfficiencyRating: player.playerEfficiencyRating,
-      };
-
-      uniquePlayer.seasons.push(seasonData);
-    });
-
-  return Array.from(playerMap.values());
+  const row = (playersCache ?? []).find((p) => p.id === id);
+  if (!row) throw new Error(`Player with ID ${id} not found`);
+  const key = `${row.name}-${row.country || 'unknown'}`;
+  const rows = (playersCache ?? []).filter(
+    (p) => `${p.name}-${p.country || 'unknown'}` === key
+  );
+  const merged = mergePlayerRows(rows);
+  if (merged.length === 0) throw new Error(`Player with ID ${id} not found`);
+  merged[0].id = id;
+  return merged[0];
 };
 
 

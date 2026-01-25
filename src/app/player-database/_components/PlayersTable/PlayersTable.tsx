@@ -106,14 +106,13 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
     { label: "Country", key: "country", isSortable: true },
     { label: "Height", key: "height", isSortable: true },
     { label: "Weight", key: "weight", isSortable: true },
+    // {
+    //   label: "Seasons Played",
+    //   key: "seasons",
+    //   cellRenderer: (val) => (Array.isArray(val) ? val.length : 0),
+    // },
     {
-      label: "Seasons Played",
-      key: "seasons",
-      isSortable: false,
-      cellRenderer: (val) => (Array.isArray(val) ? val.length : 0),
-    },
-    {
-      label: "Action",
+      label: "",
       key: "action",
       cellRenderer: (_, player) => {
         return (

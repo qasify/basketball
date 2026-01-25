@@ -161,28 +161,9 @@ export const getPlayers = async (
 };
 
 export const getPlayer = async (playerId: number): Promise<Player> => {
-  // Since we're now using grouped players from excel data,
-  // we need to search through all teams to find the player
-  // This is a temporary solution - in a real app, you'd want to index players by ID
   try {
-    const { getLeagues, getTeams, getPlayers } = await import("./excel-league-api");
-
-    const leagues = await getLeagues();
-
-    for (const league of leagues) {
-      const teams = await getTeams(league.id);
-
-      for (const team of teams) {
-        const players = await getPlayers(team.id);
-
-        const foundPlayer = players.find(player => player.id === playerId);
-        if (foundPlayer) {
-          return foundPlayer;
-        }
-      }
-    }
-
-    throw new Error(`Player with ID ${playerId} not found`);
+    const { getPlayerById } = await import("./excel-league-api");
+    return getPlayerById(playerId);
   } catch (error) {
     console.error("Error fetching player:", error);
     throw error;

@@ -23,6 +23,17 @@ const findKey = (keys, candidates) => {
   return match?.original;
 };
 
+/**
+ * Parse "Player Nationality" values like "Nationality: Denmark" or "Nationality: Belgium".
+ * Strips the "Nationality: " prefix (case-insensitive) and returns the country/countries.
+ */
+const parseNationality = (raw) => {
+  if (raw == null || raw === '') return '';
+  const s = String(raw).trim();
+  const m = s.match(/^Nationality:\s*(.+)$/i);
+  return m ? m[1].trim() : s;
+};
+
 console.log('Starting data preprocessing...');
 
 try {
@@ -81,12 +92,14 @@ try {
     const headers = Object.keys(rows[0]);
 
     const playerNameKey = findKey(headers, ['Player', 'Player Name', 'Name']);
-    const positionKey = findKey(headers, ['Pos', 'Position']);
+    const positionKey = findKey(headers, ['Pos', 'Position', 'Player Position']);
+    const heightKey = findKey(headers, ['Player Height', 'Height', 'Ht']);
+    const weightKey = findKey(headers, ['Player Weight', 'Weight', 'Wt']);
     const ageKey = findKey(headers, ['Age']);
     const seasonKey = findKey(headers, ['Season', 'Year']);
     const teamKey = findKey(headers, ['Team', 'Club']);
     const leagueKey = findKey(headers, ['League', 'Competition']);
-    const countryKey = findKey(headers, ['Country', 'Nationality', 'Nat']);
+    const countryKey = findKey(headers, ['Country', 'Nationality', 'Nat', 'Player Nationality']);
     const gpKey = findKey(headers, ['GP', 'Games Played']);
     const gsKey = findKey(headers, ['GS', 'Games Started']);
     const mpKey = findKey(headers, ['MP', 'MIN', 'Minutes', 'Minutes/G']);
@@ -163,9 +176,17 @@ try {
       if (!name) continue;
 
       const teamName = teamKey ? String(row[teamKey] ?? '').trim() : '';
-      const country = countryKey ? String(row[countryKey] ?? '').trim() : '';
+      const countryRaw = countryKey ? row[countryKey] : null;
+      const country = parseNationality(countryRaw);
       const position = positionKey
         ? String(row[positionKey] ?? '').trim()
+        : undefined;
+      const height = heightKey
+        ? (row[heightKey] != null && row[heightKey] !== '' ? String(row[heightKey]).trim() : undefined)
+        : undefined;
+      const weightRaw = weightKey ? row[weightKey] : null;
+      const weight = weightRaw != null && weightRaw !== ''
+        ? (typeof weightRaw === 'number' ? String(weightRaw) : String(weightRaw).trim())
         : undefined;
       const ageRaw = ageKey ? row[ageKey] : null;
       const age =
@@ -226,8 +247,8 @@ try {
         salary: undefined,
         contract: undefined,
         image: undefined,
-        height: undefined,
-        weight: '',
+        height,
+        weight,
         season,
         gamesPlayed: num(gpKey),
         gamesStarted: num(gsKey),
