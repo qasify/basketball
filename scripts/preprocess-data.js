@@ -34,6 +34,26 @@ const parseNationality = (raw) => {
   return m ? m[1].trim() : s;
 };
 
+/**
+ * Parse "Player ID Link" URLs like "https://basketball.realgm.com/player/Michael-Flowers/Summary/121851".
+ * Returns { name: "Michael Flowers", realgmId: 121851 } or null.
+ */
+const parsePlayerIdLink = (raw) => {
+  if (raw == null) return null;
+  let url = typeof raw === 'string' ? raw.trim() : '';
+  if (!url && typeof raw === 'object' && (raw.Target || raw.Href || raw.href)) {
+    url = String(raw.Target || raw.Href || raw.href || '').trim();
+  }
+  if (!url) return null;
+  const m = url.match(/\/player\/([^/]+)\/Summary\/(\d+)/);
+  if (!m) return null;
+  const slug = m[1];
+  const realgmId = parseInt(m[2], 10);
+  if (Number.isNaN(realgmId)) return null;
+  const name = slug.replace(/-/g, ' ').trim();
+  return name ? { name, realgmId } : null;
+};
+
 console.log('Starting data preprocessing...');
 
 try {
@@ -91,6 +111,7 @@ try {
 
     const headers = Object.keys(rows[0]);
 
+    const playerIdLinkKey = findKey(headers, ['Player ID Link', 'Player ID', 'PlayerLink', 'Link']);
     const playerNameKey = findKey(headers, ['Player', 'Player Name', 'Name']);
     const positionKey = findKey(headers, ['Pos', 'Position', 'Player Position']);
     const heightKey = findKey(headers, ['Player Height', 'Height', 'Ht']);
@@ -169,11 +190,14 @@ try {
     }
 
     for (const row of rows) {
+      const parsedLink = parsePlayerIdLink(playerIdLinkKey ? row[playerIdLinkKey] : null);
       const rawName = playerNameKey ? row[playerNameKey] : null;
-      if (!rawName) continue;
-
-      const name = String(rawName).trim();
+      const name = parsedLink
+        ? parsedLink.name
+        : (rawName != null && rawName !== '' ? String(rawName).trim() : '');
       if (!name) continue;
+
+      const realgmId = parsedLink ? parsedLink.realgmId : undefined;
 
       const teamName = teamKey ? String(row[teamKey] ?? '').trim() : '';
       const countryRaw = countryKey ? row[countryKey] : null;
@@ -233,6 +257,7 @@ try {
 
       const player = {
         id: nextPlayerId++,
+        ...(realgmId != null && { realgmId }),
         name,
         position,
         age,

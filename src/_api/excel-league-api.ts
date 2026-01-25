@@ -17,6 +17,7 @@ type InternalPlayer = ApiPlayer & {
   leagueId: number;
   teamId: number;
   season?: string;
+  realgmId?: number; // from Player ID Link, e.g. 121851
   // Statistical properties from Excel data
   gamesPlayed?: number;
   gamesStarted?: number;
@@ -103,11 +104,18 @@ function mergePlayerRows(rows: InternalPlayer[]): Player[] {
   const playerMap = new Map<string, Player & { seasons: PlayerSeason[]; season?: string }>();
 
   for (const player of rows) {
-    const playerKey = `${player.name}-${player.country || 'unknown'}`;
+    const playerKey =
+      player.realgmId != null
+        ? `realgm-${player.realgmId}`
+        : `${player.name}-${player.country || 'unknown'}`;
 
     if (!playerMap.has(playerKey)) {
-      const { leagueId: _l, teamId: _t, ...rest } = player;
-      playerMap.set(playerKey, { ...rest, seasons: [] });
+      const { leagueId: _l, teamId: _t, realgmId: _rg, ...rest } = player;
+      playerMap.set(playerKey, {
+        ...rest,
+        id: player.realgmId ?? player.id,
+        seasons: [],
+      });
     }
 
     const u = playerMap.get(playerKey)!;
@@ -177,12 +185,18 @@ export const getPlayers = async (
 
 export const getPlayerById = async (id: number): Promise<Player> => {
   await ensureLoaded();
-  const row = (playersCache ?? []).find((p) => p.id === id);
-  if (!row) throw new Error(`Player with ID ${id} not found`);
-  const key = `${row.name}-${row.country || 'unknown'}`;
-  const rows = (playersCache ?? []).filter(
-    (p) => `${p.name}-${p.country || 'unknown'}` === key
+  const row = (playersCache ?? []).find(
+    (p) => p.realgmId === id || p.id === id
   );
+  if (!row) throw new Error(`Player with ID ${id} not found`);
+  const rows =
+    row.realgmId != null
+      ? (playersCache ?? []).filter((p) => p.realgmId === row.realgmId)
+      : (playersCache ?? []).filter(
+          (p) =>
+            p.name === row.name &&
+            (p.country || 'unknown') === (row.country || 'unknown')
+        );
   const merged = mergePlayerRows(rows);
   if (merged.length === 0) throw new Error(`Player with ID ${id} not found`);
   merged[0].id = id;
