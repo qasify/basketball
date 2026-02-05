@@ -40,16 +40,17 @@ const PlayerDetailsModal = ({
         ref={ref}
         className="backdrop-blur-[10px] p-5 rounded-lg w-[500px] bg-card-radial text-white shadow-lg relative flex flex-col gap-4"
       >
-        <div className="relative h-auto">
-          <Image
-            // src={player?.image}
-            src={"/images/players/player.png"}
-            alt={player?.name}
-            layout="responsive"
-            width={359}
-            height={200}
-          />
-        </div>
+        {player?.image && (
+          <div className="relative h-auto">
+            <Image
+              src={player.image}
+              alt={player?.name}
+              layout="responsive"
+              width={359}
+              height={200}
+            />
+          </div>
+        )}
         <div className="flex justify-between items-center">
           <h2 className="text-3xl">{player?.name}</h2>
           <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />

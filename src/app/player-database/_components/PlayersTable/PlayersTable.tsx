@@ -93,7 +93,6 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
   };
 
   const playerColumns: TableColumn<Player & { action?: string }>[] = [
-    { label: "ID", key: "id", isSortable: true },
     {
       label: "Name",
       key: "name",

@@ -13,6 +13,7 @@ import {
 } from "@/components/Accordion";
 import Table from "@/components/Table";
 import { TableColumn } from "@/types/Table";
+import ScoutingReport from "../ScoutingReport";
 
 type PlayerProfileModalProps = {
   player: Player | null;
@@ -75,16 +76,17 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
   return (
     <div className="space-y-6">
       <div className="flex backdrop-blur-[10px] p-5 rounded-lg w-full bg-transparent border border-purplish text-white shadow-lg gap-4">
-        <div className="relative h-auto flex-1">
-          <Image
-            // src={player?.image}
-            src={"/images/players/player.png"}
-            alt={player?.name ?? ""}
-            layout="responsive"
-            width={359}
-            height={200}
-          />
-        </div>
+        {player?.image && (
+          <div className="relative h-auto flex-1">
+            <Image
+              src={player.image}
+              alt={player?.name ?? ""}
+              layout="responsive"
+              width={359}
+              height={200}
+            />
+          </div>
+        )}
         <div className="flex flex-col flex-1 gap-5 justify-between">
           <div className="flex justify-between items-center">
             <h2 className="text-3xl">{player?.name}</h2>
@@ -134,6 +136,9 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
           </AccordionContainer>
         </div>
       )}
+
+      {/* AI Scouting Report */}
+      <ScoutingReport player={player} />
     </div>
   );
 };
