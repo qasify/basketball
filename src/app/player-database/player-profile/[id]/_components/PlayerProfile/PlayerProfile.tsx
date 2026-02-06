@@ -46,31 +46,35 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
   };
 
   const seasonColumns: TableColumn<any>[] = [
+    // Identity
     { label: "Season", key: "season", isSortable: true },
     { label: "League", key: "league", isSortable: true },
     { label: "Team", key: "team", isSortable: true },
+    // Core box score
     { label: "GP", key: "gamesPlayed", isSortable: true },
     { label: "GS", key: "gamesStarted", isSortable: true },
     { label: "MIN", key: "minutesPerGame", isSortable: true },
     { label: "PTS", key: "pointsPerGame", isSortable: true },
-    { label: "REB", key: "reboundsPerGame", isSortable: true },
+    // Shooting
+    { label: "FGM", key: "fieldGoalsMade", isSortable: true },
+    { label: "FGA", key: "fieldGoalsAttempted", isSortable: true },
+    { label: "FG%", key: "fieldGoalPercent", isSortable: true },
+    { label: "3PM", key: "threePointersMade", isSortable: true },
+    { label: "3PA", key: "threePointersAttempted", isSortable: true },
+    { label: "3P%", key: "threePointPercent", isSortable: true },
+    { label: "FTM", key: "freeThrowsMade", isSortable: true },
+    { label: "FTA", key: "freeThrowsAttempted", isSortable: true },
+    { label: "FT%", key: "freeThrowPercent", isSortable: true },
+    // Rebounds
+    { label: "OFF", key: "offensiveRebounds", isSortable: true },
+    { label: "DEF", key: "defensiveRebounds", isSortable: true },
+    { label: "TRB", key: "reboundsPerGame", isSortable: true },
+    // Playmaking / defense
     { label: "AST", key: "assistsPerGame", isSortable: true },
     { label: "STL", key: "stealsPerGame", isSortable: true },
     { label: "BLK", key: "blocksPerGame", isSortable: true },
     { label: "TOV", key: "turnoversPerGame", isSortable: true },
-    { label: "TS%", key: "tsPercent", isSortable: true },
-    { label: "eFG%", key: "efgPercent", isSortable: true },
-    { label: "ORB%", key: "orbPercent", isSortable: true },
-    { label: "DRB%", key: "drbPercent", isSortable: true },
-    { label: "TRB%", key: "trbPercent", isSortable: true },
-    { label: "AST%", key: "astPercent", isSortable: true },
-    { label: "TOV%", key: "tovPercent", isSortable: true },
-    { label: "STL%", key: "stlPercent", isSortable: true },
-    { label: "BLK%", key: "blkPercent", isSortable: true },
-    { label: "USG%", key: "usgPercent", isSortable: true },
-    { label: "ORtg", key: "offensiveRating", isSortable: true },
-    { label: "DRtg", key: "defensiveRating", isSortable: true },
-    { label: "PER", key: "playerEfficiencyRating", isSortable: true },
+    { label: "PF", key: "personalFouls", isSortable: true },
   ];
 
   return (
@@ -91,7 +95,7 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
           <div className="flex justify-between items-center">
             <h2 className="text-3xl">{player?.name}</h2>
             <div className="flex gap-4">
-              <Button className="!p-2" onClick={handleAddToWatchList} label="Add to Watchlist"/>
+              <Button className="!p-2" onClick={handleAddToWatchList} label="Add to Watchlist" />
               <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />
             </div>
           </div>

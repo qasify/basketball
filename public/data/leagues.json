@@ -1,6 +1,125 @@
 [
   {
     "id": 1,
+    "name": "All Leagues",
+    "type": "League",
+    "logo": "",
+    "country": {
+      "id": 0,
+      "name": "",
+      "code": "",
+      "flag": ""
+    },
+    "seasons": [
+      {
+        "season": 2021,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2022,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2023,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2024,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2025,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2011,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2012,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2013,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2014,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2015,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2016,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2017,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2018,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2019,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2020,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2003,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2004,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2007,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2008,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2010,
+        "start": "",
+        "end": ""
+      },
+      {
+        "season": 2009,
+        "start": "",
+        "end": ""
+      }
+    ]
+  },
+  {
+    "id": 2,
     "name": "BCL-Eu",
     "type": "League",
     "logo": "",
@@ -118,125 +237,6 @@
       },
       {
         "season": 2004,
-        "start": "",
-        "end": ""
-      }
-    ]
-  },
-  {
-    "id": 2,
-    "name": "All Leagues",
-    "type": "League",
-    "logo": "",
-    "country": {
-      "id": 0,
-      "name": "",
-      "code": "",
-      "flag": ""
-    },
-    "seasons": [
-      {
-        "season": 2021,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2022,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2023,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2024,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2025,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2011,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2012,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2013,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2014,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2015,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2016,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2017,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2018,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2019,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2020,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2003,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2004,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2007,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2008,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2010,
-        "start": "",
-        "end": ""
-      },
-      {
-        "season": 2009,
         "start": "",
         "end": ""
       }

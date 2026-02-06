@@ -95,10 +95,35 @@ try {
       continue;
     }
 
-    const preferredSheets = ['Advanced Table', 'Advanced', 'AdvancedTable'];
-    const sheetName =
-      preferredSheets.find((name) => workbook.SheetNames.includes(name)) ??
-      workbook.SheetNames[0];
+    /**
+     * Prefer "Per Game" style sheets over advanced tables.
+     * Many RealGM exports contain both an "Advanced Table" and a
+     * "Per Game" (or similarly named) sheet. We explicitly avoid
+     * the advanced sheets here so that downstream stats represent
+     * per–game season averages.
+     */
+    const perGamePreferredSheets = [
+      'Per Game',
+      'Per Game Stats',
+      'Per Game Table',
+      'PerGame',
+      'PerGameStats',
+    ];
+    const advancedSheets = ['Advanced Table', 'Advanced', 'AdvancedTable'];
+
+    // 1) Try to find an explicit per–game sheet
+    let sheetName =
+      perGamePreferredSheets.find((name) =>
+        workbook.SheetNames.includes(name)
+      ) ?? null;
+
+    // 2) Fallback: pick the first non‑advanced sheet if possible
+    if (!sheetName) {
+      sheetName =
+        workbook.SheetNames.find(
+          (name) => !advancedSheets.includes(name)
+        ) ?? workbook.SheetNames[0];
+    }
 
     const sheet = workbook.Sheets[sheetName];
     if (!sheet) continue;
@@ -121,6 +146,9 @@ try {
     const teamKey = findKey(headers, ['Team', 'Club']);
     const leagueKey = findKey(headers, ['League', 'Competition']);
     const countryKey = findKey(headers, ['Country', 'Nationality', 'Nat', 'Player Nationality']);
+    const mainSearchedLeagueKey = findKey(headers, ['Main Searched League', 'MainLeague']);
+
+    // Box-score / per-game stats
     const gpKey = findKey(headers, ['GP', 'Games Played']);
     const gsKey = findKey(headers, ['GS', 'Games Started']);
     const mpKey = findKey(headers, ['MP', 'MIN', 'Minutes', 'Minutes/G']);
@@ -130,6 +158,24 @@ try {
     const stlKey = findKey(headers, ['STL', 'STL/G']);
     const blkKey = findKey(headers, ['BLK', 'BLK/G']);
     const tovKey = findKey(headers, ['TOV', 'TOV/G', 'TO']);
+    const pfKey = findKey(headers, ['PF', 'Fouls']);
+
+    // Shooting splits
+    const fgmKey = findKey(headers, ['FGM']);
+    const fgaKey = findKey(headers, ['FGA']);
+    const fgPctKey = findKey(headers, ['FG%']);
+    const threePmKey = findKey(headers, ['3PM', '3P']);
+    const threePaKey = findKey(headers, ['3PA']);
+    const threePctKey = findKey(headers, ['3P%', '3PT%']);
+    const ftmKey = findKey(headers, ['FTM']);
+    const ftaKey = findKey(headers, ['FTA']);
+    const ftPctKey = findKey(headers, ['FT%']);
+
+    // Offensive / defensive rebounds (per game where available)
+    const offRebKey = findKey(headers, ['OFF', 'OREB', 'OREB/G', 'Off']);
+    const defRebKey = findKey(headers, ['DEF', 'DREB', 'DREB/G', 'Def']);
+
+    // Advanced metrics
     const tsKey = findKey(headers, ['TS%', 'TS']);
     const efgKey = findKey(headers, ['eFG%', 'eFG']);
     const orbKey = findKey(headers, ['ORB%', 'ORB']);
@@ -261,6 +307,8 @@ try {
         name,
         position,
         age,
+        // Preserve the exact age as recorded for this season
+        seasonAge: age,
         country: country || undefined,
         team: teamName || undefined,
         number: undefined,
@@ -275,6 +323,14 @@ try {
         height,
         weight,
         season,
+        // Contextual meta
+        mainSearchedLeague: mainSearchedLeagueKey
+          ? (row[mainSearchedLeagueKey] != null &&
+            row[mainSearchedLeagueKey] !== ''
+              ? String(row[mainSearchedLeagueKey]).trim()
+              : undefined)
+          : undefined,
+        // Box-score / per-game stats
         gamesPlayed: num(gpKey),
         gamesStarted: num(gsKey),
         minutesPerGame: num(mpKey),
@@ -284,6 +340,20 @@ try {
         stealsPerGame: num(stlKey),
         blocksPerGame: num(blkKey),
         turnoversPerGame: num(tovKey),
+        personalFouls: num(pfKey),
+        // Shooting splits
+        fgm: num(fgmKey),
+        fga: num(fgaKey),
+        fgPercent: num(fgPctKey),
+        threePm: num(threePmKey),
+        threePa: num(threePaKey),
+        threePPercent: num(threePctKey),
+        ftm: num(ftmKey),
+        fta: num(ftaKey),
+        ftPercent: num(ftPctKey),
+        offReb: num(offRebKey),
+        defReb: num(defRebKey),
+        // Advanced metrics
         tsPercent: num(tsKey),
         efgPercent: num(efgKey),
         orbPercent: num(orbKey),

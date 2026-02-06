@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Player } from "@/_api/basketball-api";
 import { generateScoutingReport, ScoutingReport } from "@/_api/scouting-report-api";
 import {
@@ -10,7 +10,8 @@ import {
   AccordionTrigger,
 } from "@/components/Accordion";
 import Button from "@/components/Button";
-import { FaSpinner, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
+import { scoutingReportDB } from "@/_api/firebase-api";
 
 type ScoutingReportProps = {
   player: Player | null;
@@ -21,6 +22,30 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  // Load existing scouting report for this user + player if available
+  useEffect(() => {
+    const loadSavedReport = async () => {
+      if (!player) return;
+      try {
+        setIsLoading(true);
+        setError(null);
+        const saved = await scoutingReportDB.get(player.id);
+        if (saved) {
+          setReport(saved.report);
+          setLastUpdated(saved.updatedAt);
+          setIsExpanded(true);
+        }
+      } catch (err) {
+        console.error("Error loading saved scouting report:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSavedReport();
+  }, [player]);
 
   const handleGenerateReport = async () => {
     if (!player) return;
@@ -32,6 +57,14 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
     try {
       const generatedReport = await generateScoutingReport(player);
       setReport(generatedReport);
+      // Persist to Firebase when a user is logged in
+      try {
+        await scoutingReportDB.save(player.id, generatedReport);
+        setLastUpdated(new Date().toISOString());
+      } catch (err) {
+        console.error("Error saving scouting report to Firebase:", err);
+      }
+
     } catch (err) {
       setError(
         err instanceof Error
@@ -57,12 +90,12 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         <AccordionItem value="scouting" className="border-0">
           <div className="flex items-center justify-between">
             <AccordionTrigger className="flex flex-row-reverse justify-end gap-4 hover:no-underline text-xl">
-              AI Scouting Report
+              Scouting Report
             </AccordionTrigger>
-            {!report && !isLoading && (
+            {report && !isLoading && (
               <Button
                 onClick={handleGenerateReport}
-                label="Generate Report"
+                label="Regenerate Report"
                 className="!px-4 !py-2"
               />
             )}
@@ -174,11 +207,19 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 pt-2 border-t border-tileBackground">
-                  <FaCheckCircle className="text-green-400" size={14} />
-                  <span className="text-xs text-textGrey">
-                    Report generated using AI analysis
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-tileBackground">
+                  {/* <div className="flex items-center gap-2">
+                    <FaCheckCircle className="text-green-400" size={14} />
+                    <span className="text-xs text-textGrey">
+                      Report generated using AI analysis
+                    </span>
+                  </div> */}
+                  {lastUpdated && (
+                    <span className="text-xs text-textGrey">
+                      Last updated{" "}
+                      {new Date(lastUpdated).toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
             )}

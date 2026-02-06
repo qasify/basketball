@@ -54,6 +54,21 @@ export interface PlayerSeason {
   stealsPerGame?: number;
   blocksPerGame?: number;
   turnoversPerGame?: number;
+
+  // Box-score shooting / rebounding (per game where applicable)
+  fieldGoalsMade?: number; // FGM
+  fieldGoalsAttempted?: number; // FGA
+  fieldGoalPercent?: number; // FG%
+  threePointersMade?: number; // 3PM
+  threePointersAttempted?: number; // 3PA
+  threePointPercent?: number; // 3P%
+  freeThrowsMade?: number; // FTM
+  freeThrowsAttempted?: number; // FTA
+  freeThrowPercent?: number; // FT%
+  offensiveRebounds?: number; // OFF
+  defensiveRebounds?: number; // DEF
+  personalFouls?: number; // PF
+
   tsPercent?: number; // TS%
   efgPercent?: number; // eFG%
   orbPercent?: number; // ORB%
@@ -67,6 +82,10 @@ export interface PlayerSeason {
   offensiveRating?: number; // ORtg
   defensiveRating?: number; // DRtg
   playerEfficiencyRating?: number; // PER
+
+  // Additional context
+  mainSearchedLeague?: string;
+  age?: number; // Age for this specific season, if available
 }
 
 export interface Player {

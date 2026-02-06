@@ -18,6 +18,9 @@ type InternalPlayer = ApiPlayer & {
   teamId: number;
   season?: string;
   realgmId?: number; // from Player ID Link, e.g. 121851
+  // Context for this specific season row
+  seasonAge?: number;
+  mainSearchedLeague?: string;
   // Statistical properties from Excel data
   gamesPlayed?: number;
   gamesStarted?: number;
@@ -28,6 +31,22 @@ type InternalPlayer = ApiPlayer & {
   stealsPerGame?: number;
   blocksPerGame?: number;
   turnoversPerGame?: number;
+  personalFouls?: number;
+
+  // Box-score shooting / rebounding (per game where applicable)
+  fgm?: number;
+  fga?: number;
+  fgPercent?: number;
+  threePm?: number;
+  threePa?: number;
+  threePPercent?: number;
+  ftm?: number;
+  fta?: number;
+  ftPercent?: number;
+  offReb?: number;
+  defReb?: number;
+
+  // Advanced percentages / ratings
   tsPercent?: number;
   efgPercent?: number;
   orbPercent?: number;
@@ -139,6 +158,10 @@ function mergePlayerRows(rows: InternalPlayer[]): Player[] {
       season: player.season || '',
       team: player.team || '',
       league: league?.name || '',
+       // Contextual
+      mainSearchedLeague: player.mainSearchedLeague,
+      age: player.seasonAge ?? player.age,
+      // Box-score / per-game stats
       gamesPlayed: player.gamesPlayed,
       gamesStarted: player.gamesStarted,
       minutesPerGame: player.minutesPerGame,
@@ -148,6 +171,18 @@ function mergePlayerRows(rows: InternalPlayer[]): Player[] {
       stealsPerGame: player.stealsPerGame,
       blocksPerGame: player.blocksPerGame,
       turnoversPerGame: player.turnoversPerGame,
+      personalFouls: player.personalFouls,
+      fieldGoalsMade: player.fgm,
+      fieldGoalsAttempted: player.fga,
+      fieldGoalPercent: player.fgPercent,
+      threePointersMade: player.threePm,
+      threePointersAttempted: player.threePa,
+      threePointPercent: player.threePPercent,
+      freeThrowsMade: player.ftm,
+      freeThrowsAttempted: player.fta,
+      freeThrowPercent: player.ftPercent,
+      offensiveRebounds: player.offReb,
+      defensiveRebounds: player.defReb,
       tsPercent: player.tsPercent,
       efgPercent: player.efgPercent,
       orbPercent: player.orbPercent,

@@ -1,5 +1,6 @@
 import { db } from "@/utils/config/firebase";
 import { Player } from "./basketball-api";
+import type { ScoutingReport } from "./scouting-report-api";
 import {
   addDoc,
   collection,
@@ -42,6 +43,7 @@ const WATCHLIST_COLLECTION = "watchlist";
 const TEAM_ROSTER_COLLECTION = "team";
 const NOTE_COLLECTION = "note";
 const LEAGUE_PLAYER_PROFILE_COLLECTION = "league-player-profile";
+const SCOUTING_REPORT_COLLECTION = "scouting-report";
 
 export interface Note {
   note: string;
@@ -52,6 +54,13 @@ export interface Note {
 export interface FBPlayer extends Player {
   documentId: string;
   notes?: Note[];
+}
+
+export interface ScoutingReportRecord {
+  id?: string; // Firestore document id
+  playerId: number;
+  report: ScoutingReport;
+  updatedAt: string; // ISO timestamp
 }
 
 export const watchListDB = {
@@ -94,6 +103,48 @@ export const watchListDB = {
     await updateDoc(docRef, {
       ...otherData,
     });
+  },
+};
+
+export const scoutingReportDB = {
+  get: async (
+    playerId: number
+  ): Promise<ScoutingReportRecord | null> => {
+    const q = query(
+      collection(db, SCOUTING_REPORT_COLLECTION),
+      where("playerId", "==", playerId)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length === 0) {
+      return null;
+    }
+    const docSnapshot = querySnapshot.docs[0];
+    return {
+      id: docSnapshot.id,
+      ...(docSnapshot.data() as Omit<ScoutingReportRecord, "id">),
+    };
+  },
+  save: async (playerId: number, report: ScoutingReport) => {
+    const now = new Date().toISOString();
+    const q = query(
+      collection(db, SCOUTING_REPORT_COLLECTION),
+      where("playerId", "==", playerId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.docs.length === 0) {
+      await addDoc(collection(db, SCOUTING_REPORT_COLLECTION), {
+        playerId,
+        report,
+        updatedAt: now,
+      } satisfies Omit<ScoutingReportRecord, "id">);
+    } else {
+      const docRef = doc(db, SCOUTING_REPORT_COLLECTION, querySnapshot.docs[0].id);
+      await updateDoc(docRef, {
+        report,
+        updatedAt: now,
+      });
+    }
   },
 };
 
