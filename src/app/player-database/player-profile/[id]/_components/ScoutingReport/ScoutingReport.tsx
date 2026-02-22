@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Player } from "@/_api/basketball-api";
-import { generateScoutingReport, ScoutingReport } from "@/_api/scouting-report-api";
+import { generateScoutingReport, extendScoutingReportWithPrompt, ScoutingReport } from "@/_api/scouting-report-api";
 import {
   AccordionContainer,
   AccordionContent,
@@ -23,6 +23,11 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [userNotes, setUserNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isExtending, setIsExtending] = useState(false);
+  const [extendError, setExtendError] = useState<string | null>(null);
 
   // Load existing scouting report for this user + player if available
   useEffect(() => {
@@ -35,6 +40,7 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         if (saved) {
           setReport(saved.report);
           setLastUpdated(saved.updatedAt);
+          setUserNotes(saved.userNotes ?? "");
           setIsExpanded(true);
         }
       } catch (err) {
@@ -76,6 +82,36 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
     }
   };
 
+  const handleSaveNotes = async () => {
+    if (!player || !report || savingNotes) return;
+    setSavingNotes(true);
+    try {
+      await scoutingReportDB.updateNotes(player.id, userNotes);
+      setLastUpdated(new Date().toISOString());
+    } catch (err) {
+      console.error("Error saving notes:", err);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleAskAiToExtend = async () => {
+    if (!player || !report || !aiPrompt.trim() || isExtending) return;
+    setIsExtending(true);
+    setExtendError(null);
+    try {
+      const updatedReport = await extendScoutingReportWithPrompt(player, report, aiPrompt.trim());
+      setReport(updatedReport);
+      await scoutingReportDB.save(player.id, updatedReport);
+      setLastUpdated(new Date().toISOString());
+      setAiPrompt("");
+    } catch (err) {
+      setExtendError(err instanceof Error ? err.message : "Failed to update report with AI.");
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
   if (!player) return null;
 
   return (
@@ -88,18 +124,9 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         onValueChange={(value) => setIsExpanded(value === "scouting")}
       >
         <AccordionItem value="scouting" className="border-0">
-          <div className="flex items-center justify-between">
-            <AccordionTrigger className="flex flex-row-reverse justify-end gap-4 hover:no-underline text-xl">
-              Scouting Report
-            </AccordionTrigger>
-            {report && !isLoading && (
-              <Button
-                onClick={handleGenerateReport}
-                label="Regenerate Report"
-                className="!px-4 !py-2"
-              />
-            )}
-          </div>
+          <AccordionTrigger className="flex flex-row-reverse justify-end gap-4 hover:no-underline text-xl">
+            Scouting Report
+          </AccordionTrigger>
           <AccordionContent className="pt-4">
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-8 gap-4">
@@ -155,11 +182,11 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                   </div>
                 )}
 
-                {/* Weaknesses */}
+                {/* Limitations or risk factors */}
                 {report.weaknesses && report.weaknesses.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3 text-orange-400">
-                      Areas for Improvement
+                      Limitations or risk factors
                     </h3>
                     <ul className="space-y-2">
                       {report.weaknesses.map((weakness, index) => (
@@ -207,19 +234,62 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-tileBackground">
-                  {/* <div className="flex items-center gap-2">
-                    <FaCheckCircle className="text-green-400" size={14} />
-                    <span className="text-xs text-textGrey">
-                      Report generated using AI analysis
-                    </span>
-                  </div> */}
+                <div className="pt-2 border-t border-tileBackground space-y-4">
                   {lastUpdated && (
-                    <span className="text-xs text-textGrey">
-                      Last updated{" "}
-                      {new Date(lastUpdated).toLocaleString()}
-                    </span>
+                    <p className="text-xs text-textGrey">
+                      Last updated {new Date(lastUpdated).toLocaleString()}
+                    </p>
                   )}
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 text-purple-300">
+                      Ask AI to add to this report
+                    </h3>
+                    <p className="text-sm text-textGrey mb-2">
+                      Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="e.g. Add more on his pick-and-roll defense"
+                        className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
+                        disabled={isExtending}
+                      />
+                      <Button
+                        onClick={handleAskAiToExtend}
+                        label={isExtending ? "Updating..." : "Update report with AI"}
+                        className="!px-4 !py-2 shrink-0"
+                        {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
+                      />
+                    </div>
+                    {extendError && (
+                      <p className="text-sm text-red-400 mt-2">{extendError}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 text-purple-300">
+                      Add your own notes
+                    </h3>
+                    <p className="text-sm text-textGrey mb-2">
+                      Add notes or context that stay with this report (e.g. viewing notes, follow-up).
+                    </p>
+                    <textarea
+                      value={userNotes}
+                      onChange={(e) => setUserNotes(e.target.value)}
+                      placeholder="Type your notes here..."
+                      rows={4}
+                      className="w-full rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y min-h-[100px]"
+                    />
+                    <Button
+                      onClick={handleSaveNotes}
+                      label={savingNotes ? "Saving..." : "Save notes"}
+                      className="!px-4 !py-2 mt-2"
+                      {...(savingNotes && { "aria-disabled": true })}
+                    />
+                  </div>
                 </div>
               </div>
             )}

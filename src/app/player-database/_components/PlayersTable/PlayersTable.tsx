@@ -61,7 +61,7 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
   }, [players, sortBy, sortDirection]);
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(players?.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(players?.length / itemsPerPage));
 
   const paginatedPlayers = sortedPlayers?.slice(
     (currentPage - 1) * itemsPerPage,

@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
 import Button from "@/components/Button";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaStickyNote } from "react-icons/fa";
 import { Player } from "@/_api/basketball-api";
-import { MouseEvent } from "react";
+import { MouseEvent, useMemo, useState } from "react";
 import { watchListDB } from "@/_api/firebase-api";
 import {
   AccordionContainer,
@@ -14,12 +14,21 @@ import {
 import Table from "@/components/Table";
 import { TableColumn } from "@/types/Table";
 import ScoutingReport from "../ScoutingReport";
+import Note from "@/components/Note";
+
+/** Parse season string "2024-25" or "2021-22 *" to year number for sorting. */
+function parseSeasonYear(season: string): number {
+  const match = /^(\d{4})/.exec(String(season || "").trim());
+  return match ? parseInt(match[1], 10) : 0;
+}
 
 type PlayerProfileModalProps = {
   player: Player | null;
 };
 
 const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
+
   const handleAddToWatchList = async (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     if (player) {
@@ -44,6 +53,14 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
       </p>
     );
   };
+
+  /** Seasons sorted latest (e.g. 2024-25) to oldest (e.g. 2020-21). */
+  const sortedSeasons = useMemo(() => {
+    if (!player?.seasons?.length) return [];
+    return [...player.seasons].sort(
+      (a, b) => parseSeasonYear(b.season) - parseSeasonYear(a.season)
+    );
+  }, [player?.seasons]);
 
   const seasonColumns: TableColumn<any>[] = [
     // Identity
@@ -94,8 +111,14 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
         <div className="flex flex-col flex-1 gap-5 justify-between">
           <div className="flex justify-between items-center">
             <h2 className="text-3xl">{player?.name}</h2>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Button className="!p-2" onClick={handleAddToWatchList} label="Add to Watchlist" />
+              <Button
+                className="!p-2 rounded"
+                icon={<FaStickyNote size={18} />}
+                label="Notes"
+                onClick={() => setIsNoteOpen(true)}
+              />
               <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />
             </div>
           </div>
@@ -114,7 +137,7 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
       </div>
 
       {/* Seasons and Stats */}
-      {player?.seasons && player.seasons.length > 0 && (
+      {sortedSeasons.length > 0 && (
         <div className="backdrop-blur-[10px] p-5 rounded-lg w-full bg-transparent border border-purplish text-white shadow-lg">
           <AccordionContainer
             type="single"
@@ -129,7 +152,7 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
               <AccordionContent className="pt-4">
                 <Table
                   columns={seasonColumns}
-                  data={player.seasons}
+                  data={sortedSeasons}
                   className="border-none rounded-lg min-w-full"
                   tableClass="min-w-max"
                   headerClass="bg-borderPurple text-white"
@@ -143,6 +166,12 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
 
       {/* AI Scouting Report */}
       <ScoutingReport player={player} />
+
+      <Note
+        player={player}
+        isOpen={isNoteOpen}
+        onClose={() => setIsNoteOpen(false)}
+      />
     </div>
   );
 };

@@ -27,11 +27,14 @@ const NoteModal = ({
   }, [isOpen, player]);
 
   const fetchNote = async () => {
-    // if (player) {
-    //   setNote("");
-    //   const fetchedNote = await notesDB.get(player.id);
-    //   setNote(fetchedNote);
-    // }
+    if (!player) return;
+    try {
+      const notes = await notesDB.get(player.id);
+      const existing = Array.isArray(notes) && notes.length > 0 ? notes[0] : null;
+      setNote((existing as { note?: string })?.note ?? "");
+    } catch {
+      setNote("");
+    }
   };
 
   const handleSave = async () => {

@@ -61,6 +61,8 @@ export interface ScoutingReportRecord {
   playerId: number;
   report: ScoutingReport;
   updatedAt: string; // ISO timestamp
+  /** User-added notes or additional information for the scouting report */
+  userNotes?: string;
 }
 
 export const watchListDB = {
@@ -145,6 +147,18 @@ export const scoutingReportDB = {
         updatedAt: now,
       });
     }
+  },
+  /** Update only user-added notes (and last updated). Report must already exist. */
+  updateNotes: async (playerId: number, userNotes: string) => {
+    const now = new Date().toISOString();
+    const q = query(
+      collection(db, SCOUTING_REPORT_COLLECTION),
+      where("playerId", "==", playerId)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length === 0) return;
+    const docRef = doc(db, SCOUTING_REPORT_COLLECTION, querySnapshot.docs[0].id);
+    await updateDoc(docRef, { userNotes, updatedAt: now });
   },
 };
 

@@ -22,6 +22,7 @@ import {
   type Player,
   type Team,
 } from "@/_api/excel-league-api";
+import type { PlayerSeason } from "@/_api/basketball-api";
 
 const MultiSelect = dynamic(() => import("@/components/Select/MultiSelect"), {
   ssr: false,
@@ -76,6 +77,88 @@ const initialFilters: Filters = {
   ftPercentage: "",
 };
 
+/** Parse height string like "6-1 (185cm)" or "6'8\"" to inches. Returns null if unparseable. */
+function parseHeightToInches(heightStr: string | undefined): number | null {
+  if (!heightStr || typeof heightStr !== "string") return null;
+  const s = heightStr.trim();
+  // Already just a number (inches)
+  const onlyNum = /^\d+$/.exec(s);
+  if (onlyNum) return parseInt(onlyNum[0], 10);
+  // "6-1" or "6-10" (feet-inches)
+  const ftIn = /^(\d+)[-' ](\d+)/.exec(s);
+  if (ftIn) return parseInt(ftIn[1], 10) * 12 + parseInt(ftIn[2], 10);
+  // "6'8" or "6'8\""
+  const ftIn2 = /^(\d+)'(\d+)/.exec(s);
+  if (ftIn2) return parseInt(ftIn2[1], 10) * 12 + parseInt(ftIn2[2], 10);
+  return null;
+}
+
+/** Parse country string like "Canada / England" into ["Canada", "England"]. Single country returns [country]. */
+function parseCountryToArray(country: string | undefined): string[] {
+  if (!country || typeof country !== "string") return [];
+  return country
+    .split("/")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Parse weight string like "190 lbs (86kg)" to lbs number. Returns null if unparseable. */
+function parseWeightToLbs(weightStr: string | undefined): number | null {
+  if (!weightStr || typeof weightStr !== "string") return null;
+  const match = /(\d+)\s*lbs?/i.exec(weightStr.trim());
+  if (match) return parseInt(match[1], 10);
+  const onlyNum = /^\d+$/.exec(weightStr.trim());
+  if (onlyNum) return parseInt(onlyNum[0], 10);
+  return null;
+}
+
+/** Config for stats filters: filter key, season key, label, and whether it's a range. */
+const STAT_FILTER_CONFIG: {
+  filterKey: keyof Filters;
+  seasonKey: keyof PlayerSeason;
+  label: string;
+  isPercentage: boolean;
+  isRange: boolean;
+}[] = [
+  { filterKey: "noOfGamesPlayed", seasonKey: "gamesPlayed", label: "# of Games Played", isPercentage: false, isRange: false },
+  { filterKey: "rebG", seasonKey: "reboundsPerGame", label: "REB/G", isPercentage: false, isRange: false },
+  { filterKey: "astG", seasonKey: "assistsPerGame", label: "AST/G", isPercentage: false, isRange: false },
+  { filterKey: "ptsG", seasonKey: "pointsPerGame", label: "PTS/G", isPercentage: false, isRange: false },
+  { filterKey: "fgPercentage", seasonKey: "fieldGoalPercent", label: "FG%", isPercentage: true, isRange: false },
+  { filterKey: "minutesG", seasonKey: "minutesPerGame", label: "Minutes/G", isPercentage: false, isRange: true },
+  { filterKey: "stlG", seasonKey: "stealsPerGame", label: "STL/G", isPercentage: false, isRange: false },
+  { filterKey: "blkG", seasonKey: "blocksPerGame", label: "BLK/G", isPercentage: false, isRange: false },
+  { filterKey: "threePtPercentage", seasonKey: "threePointPercent", label: "3PT%", isPercentage: true, isRange: false },
+  { filterKey: "ftPercentage", seasonKey: "freeThrowPercent", label: "FT%", isPercentage: true, isRange: false },
+];
+
+function getAvailableSeasonStatKeys(players: Player[]): Set<keyof PlayerSeason> {
+  const keys = new Set<keyof PlayerSeason>();
+  for (const p of players) {
+    for (const s of p.seasons ?? []) {
+      for (const k of STAT_FILTER_CONFIG.map((c) => c.seasonKey)) {
+        const v = s[k];
+        if (v != null && typeof v === "number" && !Number.isNaN(v)) keys.add(k);
+      }
+    }
+  }
+  return keys;
+}
+
+function hasAnyStatFilterSet(f: Filters): boolean {
+  if (String(f.noOfGamesPlayed ?? "").trim()) return true;
+  if (String(f.rebG ?? "").trim()) return true;
+  if (String(f.astG ?? "").trim()) return true;
+  if (String(f.ptsG ?? "").trim()) return true;
+  if (String(f.fgPercentage ?? "").trim()) return true;
+  if (String(f.minutesG?.from ?? "").trim() || String(f.minutesG?.to ?? "").trim()) return true;
+  if (String(f.stlG ?? "").trim()) return true;
+  if (String(f.blkG ?? "").trim()) return true;
+  if (String(f.threePtPercentage ?? "").trim()) return true;
+  if (String(f.ftPercentage ?? "").trim()) return true;
+  return false;
+}
+
 const PlayerDatabaseContent = () => {
   const [searchValue, setSearchValue] = useState("");
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -89,21 +172,123 @@ const PlayerDatabaseContent = () => {
   const [error, setError] = useState<string | null>(null);
 
   const filteredPlayers = useMemo(() => {
-    return players.filter(
-      (player) =>
-        (player.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          player.country?.toLowerCase().includes(searchValue.toLowerCase())) &&
-        (!player.age ||
-          (player.age >= filters.ageRange[0] &&
-            player.age <= filters.ageRange[1])) &&
-        (filters.countries.length === 0 ||
-          filters.countries.find((option) => option.value === player.country)) &&
-        (filters.positions.length === 0 ||
-          filters.positions.find((option) => option.value === player.position))
-      // Additional season-based filters can be added here if needed
-      // For now, basic filters work on player level
-    );
+    return players.filter((player) => {
+      // Search
+      if (
+        searchValue &&
+        !player.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+        !player.country?.toLowerCase().includes(searchValue.toLowerCase())
+      ) {
+        return false;
+      }
+      // Age range
+      if (
+        player.age != null &&
+        (player.age < filters.ageRange[0] || player.age > filters.ageRange[1])
+      ) {
+        return false;
+      }
+      // Country: player can have "Country A / Country B"; treat as array and match if any selected
+      if (filters.countries.length > 0) {
+        const playerCountries = parseCountryToArray(player.country);
+        const selectedValues = new Set(filters.countries.map((o) => o.value));
+        const hasMatch = playerCountries.some((c) => selectedValues.has(c));
+        if (!hasMatch) return false;
+      }
+      // Position
+      if (
+        filters.positions.length > 0 &&
+        !filters.positions.some((option) => option.label === player.position)
+      ) {
+        return false;
+      }
+      // Height (inch) range
+      const heightFrom = filters.height.from?.trim();
+      const heightTo = filters.height.to?.trim();
+      if (heightFrom || heightTo) {
+        const playerInches = parseHeightToInches(player.height);
+        if (playerInches == null) return false;
+        const fromNum = heightFrom ? parseInt(heightFrom, 10) : null;
+        const toNum = heightTo ? parseInt(heightTo, 10) : null;
+        if (fromNum != null && !Number.isNaN(fromNum) && playerInches < fromNum)
+          return false;
+        if (toNum != null && !Number.isNaN(toNum) && playerInches > toNum)
+          return false;
+      }
+      // Weight (lbs) - treat as minimum weight when set
+      const weightFilter = filters.weight.trim();
+      if (weightFilter) {
+        const minLbs = parseInt(weightFilter, 10);
+        if (!Number.isNaN(minLbs)) {
+          const playerLbs = parseWeightToLbs(player.weight);
+          if (playerLbs == null || playerLbs < minLbs) return false;
+        }
+      }
+      // Stats filters: require at least one season meeting all specified minimums
+      const seasons = player.seasons ?? [];
+      if (seasons.length > 0) {
+        const meetsStat = (
+          seasonKey: keyof PlayerSeason,
+          filterVal: string,
+          isPercentage: boolean
+        ) => {
+          if (!filterVal.trim()) return true;
+          let num = parseFloat(filterVal);
+          if (Number.isNaN(num)) return true;
+          if (isPercentage) num = num / 100; // user enters 45.5, data is 0.455
+          const hasMatch = seasons.some((s) => {
+            const v = s[seasonKey];
+            if (v == null || typeof v !== "number") return false;
+            return v >= num;
+          });
+          return hasMatch;
+        };
+        const meetsRange = (
+          seasonKey: keyof PlayerSeason,
+          fromVal?: string,
+          toVal?: string
+        ) => {
+          const fromNum = fromVal?.trim() ? parseFloat(fromVal) : null;
+          const toNum = toVal?.trim() ? parseFloat(toVal) : null;
+          if (fromNum == null && toNum == null) return true;
+          const fromOk = fromNum == null || !Number.isNaN(fromNum);
+          const toOk = toNum == null || !Number.isNaN(toNum);
+          if (!fromOk && !toOk) return true;
+          return seasons.some((s) => {
+            const m = s[seasonKey];
+            if (m == null || typeof m !== "number") return false;
+            if (fromNum != null && !Number.isNaN(fromNum) && m < fromNum) return false;
+            if (toNum != null && !Number.isNaN(toNum) && m > toNum) return false;
+            return true;
+          });
+        };
+        for (const cfg of STAT_FILTER_CONFIG) {
+          if (cfg.isRange) {
+            const range = filters[cfg.filterKey] as { from?: string; to?: string } | undefined;
+            const fromVal = range?.from?.trim();
+            const toVal = range?.to?.trim();
+            if (fromVal || toVal) {
+              if (!meetsRange(cfg.seasonKey, fromVal || undefined, toVal || undefined)) return false;
+            }
+          } else {
+            const filterVal = String(filters[cfg.filterKey] ?? "").trim();
+            if (filterVal && !meetsStat(cfg.seasonKey, filterVal, cfg.isPercentage))
+              return false;
+          }
+        }
+      } else if (hasAnyStatFilterSet(filters)) {
+        // User set a stat filter but player has no season data → exclude
+        return false;
+      }
+      return true;
+    });
   }, [filters, players, searchValue]);
+
+  /** Only show stat filters for stats that exist in the loaded player data. */
+  const availableStatKeys = useMemo(
+    () => getAvailableSeasonStatKeys(players),
+    [players]
+  );
 
   const handleFilterChange = <K extends keyof Filters>(
     filterName: K,
@@ -127,13 +312,20 @@ const PlayerDatabaseContent = () => {
     key: "to" | "from",
     value: string
   ) => {
-    setFilters((prev) => ({
-      ...prev,
-      [primaryKey]: {
-        ...prev.height,
-        [key]: value,
-      },
-    }));
+    setFilters((prev) => {
+      const current = prev[primaryKey];
+      const currentObj =
+        current && typeof current === "object" && !Array.isArray(current)
+          ? current
+          : {};
+      return {
+        ...prev,
+        [primaryKey]: {
+          ...currentObj,
+          [key]: value,
+        },
+      };
+    });
   };
 
   // const handleClearFilters = () => {
@@ -251,16 +443,13 @@ const PlayerDatabaseContent = () => {
     }
   };
 
+  /** Unique country names for filter: split "A / B" into separate options, sorted alphabetically. */
   const extractUniqueCountries = (players: Player[]): string[] => {
-    const countries = new Set<string>();
-
+    const set = new Set<string>();
     players.forEach((player) => {
-      if (player.country) {
-        countries.add(player.country);
-      }
+      parseCountryToArray(player.country).forEach((c) => set.add(c));
     });
-
-    return Array.from(countries);
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   };
 
   return (
@@ -456,12 +645,11 @@ const PlayerDatabaseContent = () => {
         </AccordionItem>
       </AccordionContainer>
 
-      {/* Stats Filters */}
+      {/* Stats Filters – only show filters for stats present in the data */}
       <AccordionContainer
         type="single"
         collapsible
         className="w-full border-0"
-        // defaultValue="statsFilters"
       >
         <AccordionItem
           value="statsFilters"
@@ -471,157 +659,64 @@ const PlayerDatabaseContent = () => {
             Stats Filters
           </AccordionTrigger>
           <AccordionContent className="flex gap-5 !overflow-hidden">
-            {/* left */}
-            <div className="flex-1 space-y-5">
-              {/* # of Games Played  */}
-              <div className="space-y-[10px] flex-1">
-                <h2># of Games Played</h2>
-                <Input
-                  placeholder="# of Games Played"
-                  value={filters?.noOfGamesPlayed ?? ""}
-                  type="number"
-                  onChange={(e) =>
-                    handleFilterChange("noOfGamesPlayed", e.target.value)
-                  }
-                  className="border-white/50 w-full border-white"
-                />
-              </div>
-
-              {/* REB/G and AST/G */}
-              <div className="flex space-x-5 flex-1">
-                {/* REB/G  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>REB/G</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.rebG ?? ""}
-                    onChange={(e) => handleFilterChange("rebG", e.target.value)}
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-
-                {/* AST/G  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>AST/G</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.astG ?? ""}
-                    onChange={(e) => handleFilterChange("astG", e.target.value)}
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-              </div>
-
-              {/* PTS/G and FG% */}
-              <div className="flex space-x-5 flex-1">
-                {/* REB/G  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>PTS/G</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.ptsG ?? ""}
-                    onChange={(e) => handleFilterChange("ptsG", e.target.value)}
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-
-                {/* FG%  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>FG%</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.fgPercentage ?? ""}
-                    onChange={(e) =>
-                      handleFilterChange("fgPercentage", e.target.value)
-                    }
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-              </div>
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {STAT_FILTER_CONFIG.filter((cfg) =>
+                availableStatKeys.has(cfg.seasonKey)
+              ).map((cfg) =>
+                cfg.isRange ? (
+                  <div key={cfg.filterKey} className="space-y-[10px]">
+                    <h2>{cfg.label}</h2>
+                    <div className="flex items-center gap-5">
+                      <Input
+                        placeholder="from"
+                        value={(filters[cfg.filterKey] as { from?: string })?.from ?? ""}
+                        type="number"
+                        onChange={(e) =>
+                          handleRangeChange(
+                            cfg.filterKey as "height" | "minutesG",
+                            "from",
+                            e.target.value
+                          )
+                        }
+                        className="border-white/50 w-full border-white"
+                      />
+                      <span className="text-md">to</span>
+                      <Input
+                        placeholder="to"
+                        type="number"
+                        value={(filters[cfg.filterKey] as { to?: string })?.to ?? ""}
+                        onChange={(e) =>
+                          handleRangeChange(
+                            cfg.filterKey as "height" | "minutesG",
+                            "to",
+                            e.target.value
+                          )
+                        }
+                        className="border-white/50 w-full border-white"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div key={cfg.filterKey} className="space-y-[10px]">
+                    <h2>{cfg.label}</h2>
+                    <Input
+                      placeholder={cfg.isPercentage ? "e.g. 45.5" : `Min ${cfg.label}`}
+                      value={String(filters[cfg.filterKey] ?? "")}
+                      type="number"
+                      onChange={(e) =>
+                        handleFilterChange(cfg.filterKey, e.target.value)
+                      }
+                      className="border-white/50 w-full border-white"
+                    />
+                  </div>
+                )
+              )}
             </div>
-
-            {/* right */}
-            <div className="flex-1 space-y-5">
-              {/* Minutes/G */}
-              <div className="space-y-[10px] flex-1">
-                <h2>Minutes/G</h2>
-                <div className="flex items-center gap-5">
-                  <Input
-                    placeholder="from"
-                    value={filters?.minutesG?.from ?? ""}
-                    type="number"
-                    onChange={(e) =>
-                      handleRangeChange("minutesG", "from", e.target.value)
-                    }
-                    className="border-white/50 w-full border-white"
-                  />
-                  <span className="text-md">to</span>
-                  <Input
-                    placeholder="to"
-                    type="number"
-                    value={filters?.minutesG?.to ?? ""}
-                    onChange={(e) =>
-                      handleRangeChange("minutesG", "to", e.target.value)
-                    }
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-              </div>
-
-              {/* STL/G and BLK/G */}
-              <div className="flex space-x-5 flex-1">
-                {/* STL/G  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>STL/G</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.stlG ?? ""}
-                    onChange={(e) => handleFilterChange("stlG", e.target.value)}
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-
-                {/* BLK/G  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>BLK/G</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.blkG ?? ""}
-                    onChange={(e) => handleFilterChange("blkG", e.target.value)}
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-              </div>
-
-              {/* 3PT% and FT% */}
-              <div className="flex space-x-5 flex-1">
-                {/* 3PT%  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>3PT%</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.threePtPercentage ?? ""}
-                    onChange={(e) =>
-                      handleFilterChange("threePtPercentage", e.target.value)
-                    }
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-
-                {/* FT%  */}
-                <div className="space-y-[10px] flex-1">
-                  <h2>FT%</h2>
-                  <Input
-                    placeholder=""
-                    value={filters?.ftPercentage ?? ""}
-                    onChange={(e) =>
-                      handleFilterChange("ftPercentage", e.target.value)
-                    }
-                    className="border-white/50 w-full border-white"
-                  />
-                </div>
-              </div>
-            </div>
+            {availableStatKeys.size === 0 && (
+              <p className="text-sm text-white/70 col-span-2">
+                Load players (select League/Teams) to see stats filters from the data.
+              </p>
+            )}
           </AccordionContent>
         </AccordionItem>
       </AccordionContainer>
