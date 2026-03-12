@@ -1,5 +1,5 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import { Player } from "@/_api/basketball-api";
@@ -16,9 +16,11 @@ import { watchListDB } from "@/_api/firebase-api";
 
 const PlayersTable: FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
-  watchListDB.getAll().then((p) => {
-    setPlayers(p as Player[]);
-  });
+  useEffect(() => {
+    watchListDB.getAll().then((p) => {
+      setPlayers(p as Player[]);
+    });
+  }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<keyof Player | undefined>(undefined);
