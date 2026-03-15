@@ -14,6 +14,7 @@ import { Save } from "lucide-react";
 import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import { scoutingReportDB } from "@/_api/firebase-api";
 import { useAuth } from "@/hooks/useAuth";
+import { isAdminEmail } from "@/utils/auth";
 
 type ScoutingReportProps = {
   player: Player | null;
@@ -21,6 +22,8 @@ type ScoutingReportProps = {
 
 const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
   const { user, role, loading: authLoading } = useAuth();
+  const isAdmin =
+    role === "admin" || isAdminEmail(user?.email ?? null);
   const [report, setReport] = useState<ScoutingReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +60,11 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         if (saved) {
           setReport(saved.report);
           setLastUpdated(saved.updatedAt);
-          // retrieve notes specific to the current user
-          if (user?.email && saved.userNotes) {
-            const emailKey = user.email.replace(/\./g, '_');
-            setUserNotes(saved.userNotes[emailKey] ?? "");
+          // Per-user notes map in Firestore (see scoutingReportDB.updateNotes)
+          if (user?.email && saved.userNotes && typeof saved.userNotes === "object") {
+            const emailKey = user.email.replace(/\./g, "_");
+            const notes = saved.userNotes as Record<string, string>;
+            setUserNotes(notes[emailKey] ?? "");
           } else {
             setUserNotes("");
           }
@@ -178,11 +182,13 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                   <span className="font-semibold">Error</span>
                 </div>
                 <p className="text-sm text-red-300">{error}</p>
-                <Button
-                  onClick={handleGenerateReport}
-                  label="Retry"
-                  className="!px-4 !py-2 !text-sm"
-                />
+                {isAdmin && (
+                  <Button
+                    onClick={handleGenerateReport}
+                    label="Retry"
+                    className="!px-4 !py-2 !text-sm"
+                  />
+                )}
               </div>
             )}
 
@@ -277,7 +283,7 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                     </p>
                   )}
 
-                  {role === 'admin' && (
+                  {isAdmin && (
                     <div>
                       <h3 className="text-lg font-semibold mb-2 text-purple-300">
                         Ask AI to add to this report
@@ -342,17 +348,22 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
 
             {!report && !busyLoading && !error && (
               <div className="text-center py-8">
-                <p className="text-textGrey mb-4">
-                  {role === 'admin' 
-                    ? "Generate an AI-powered scouting report based on this player's statistics and performance data." 
-                    : "No scouting report available for this player yet."}
-                </p>
-                {role === 'admin' && (
-                  <Button
-                    onClick={handleGenerateReport}
-                    label="Generate Scouting Report"
-                    className="!px-6 !py-3"
-                  />
+                {isAdmin ? (
+                  <>
+                    <p className="text-textGrey mb-4">
+                      Generate an AI-powered scouting report based on this
+                      player&apos;s statistics and performance data.
+                    </p>
+                    <Button
+                      onClick={handleGenerateReport}
+                      label="Generate Scouting Report"
+                      className="!px-6 !py-3"
+                    />
+                  </>
+                ) : (
+                  <p className="text-textGrey">
+                    No scouting report available for this player yet.
+                  </p>
                 )}
               </div>
             )}
