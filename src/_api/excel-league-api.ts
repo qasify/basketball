@@ -144,6 +144,7 @@ function mergePlayerRows(rows: InternalPlayer[]): Player[] {
     if (player.number && !u.number) u.number = player.number;
     if (player.salary && !u.salary) u.salary = player.salary;
     if (player.contract && !u.contract) u.contract = player.contract;
+    if (player.agency && !u.agency) u.agency = player.agency;
 
     const currYear = player.season ? parseInt(String(player.season).split('-')[0], 10) || 0 : 0;
     const existYear = u.season ? parseInt(String(u.season).split('-')[0], 10) || 0 : 0;

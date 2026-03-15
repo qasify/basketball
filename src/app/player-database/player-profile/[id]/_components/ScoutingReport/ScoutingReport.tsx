@@ -10,14 +10,20 @@ import {
   AccordionTrigger,
 } from "@/components/Accordion";
 import Button from "@/components/Button";
+import { Save } from "lucide-react";
 import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import { scoutingReportDB } from "@/_api/firebase-api";
+import { useAuth } from "@/hooks/useAuth";
+import { isAdminEmail } from "@/utils/auth";
 
 type ScoutingReportProps = {
   player: Player | null;
 };
 
 const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
+  const { user } = useAuth();
+  const isAdmin = isAdminEmail(user?.email ?? null);
+
   const [report, setReport] = useState<ScoutingReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +46,10 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         if (saved) {
           setReport(saved.report);
           setLastUpdated(saved.updatedAt);
-          setUserNotes(saved.userNotes ?? "");
+          // add type check for userNotes
+          setUserNotes(
+            typeof saved.userNotes === "string" ? saved.userNotes : ""
+          );
           setIsExpanded(true);
         }
       } catch (err) {
@@ -142,11 +151,13 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                   <span className="font-semibold">Error</span>
                 </div>
                 <p className="text-sm text-red-300">{error}</p>
-                <Button
-                  onClick={handleGenerateReport}
-                  label="Retry"
-                  className="!px-4 !py-2 !text-sm"
-                />
+                {isAdmin && (
+                  <Button
+                    onClick={handleGenerateReport}
+                    label="Retry"
+                    className="!px-4 !py-2 !text-sm"
+                  />
+                )}
               </div>
             )}
 
@@ -241,52 +252,56 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                     </p>
                   )}
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2 text-purple-300">
-                      Ask AI to add to this report
-                    </h3>
-                    <p className="text-sm text-textGrey mb-2">
-                      Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                        placeholder="e.g. Add more on his pick-and-roll defense"
-                        className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
-                        disabled={isExtending}
-                      />
-                      <Button
-                        onClick={handleAskAiToExtend}
-                        label={isExtending ? "Updating..." : "Update report with AI"}
-                        className="!px-4 !py-2 shrink-0"
-                        {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
-                      />
+                  {isAdmin && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 text-purple-300">
+                        Ask AI to add to this report
+                      </h3>
+                      <p className="text-sm text-textGrey mb-2">
+                        Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="e.g. Add more on his pick-and-roll defense"
+                          className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
+                          disabled={isExtending}
+                        />
+                        <Button
+                          onClick={handleAskAiToExtend}
+                          label={isExtending ? "Updating..." : "Update report with AI"}
+                          className="!px-4 !py-2 shrink-0"
+                          {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
+                        />
+                      </div>
+                      {extendError && (
+                        <p className="text-sm text-red-400 mt-2">{extendError}</p>
+                      )}
                     </div>
-                    {extendError && (
-                      <p className="text-sm text-red-400 mt-2">{extendError}</p>
-                    )}
-                  </div>
+                  )}
 
-                  <div>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold mb-2 text-purple-300">
                       Add your own notes
                     </h3>
-                    <p className="text-sm text-textGrey mb-2">
+                    <p className="text-sm text-textGrey mb-3">
                       Add notes or context that stay with this report (e.g. viewing notes, follow-up).
                     </p>
                     <textarea
-                      value={userNotes}
+                      value={typeof userNotes === "string" ? userNotes : ""}
                       onChange={(e) => setUserNotes(e.target.value)}
                       placeholder="Type your notes here..."
                       rows={4}
-                      className="w-full rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y min-h-[100px]"
+                      className="w-full rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y min-h-[100px] focus:border-purplish focus:ring-1 focus:ring-purplish/50 outline-none transition-colors"
                     />
                     <Button
                       onClick={handleSaveNotes}
+                      iconAlignment="right"
+                      icon={<Save className="w-4 h-4 shrink-0" aria-hidden />}
                       label={savingNotes ? "Saving..." : "Save notes"}
-                      className="!px-4 !py-2 mt-2"
+                      className="!px-5 !py-2.5 mt-3 !bg-purplish/10 hover:!bg-purplish/20 !text-white !border !border-purpleFill/60 rounded-lg transition-colors disabled:opacity-70"
                       {...(savingNotes && { "aria-disabled": true })}
                     />
                   </div>
@@ -296,15 +311,23 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
 
             {!report && !isLoading && !error && (
               <div className="text-center py-8">
-                <p className="text-textGrey mb-4">
-                  Generate an AI-powered scouting report based on this player's
-                  statistics and performance data.
-                </p>
-                <Button
-                  onClick={handleGenerateReport}
-                  label="Generate Scouting Report"
-                  className="!px-6 !py-3"
-                />
+                {isAdmin ? (
+                  <>
+                    <p className="text-textGrey mb-4">
+                      Generate an AI-powered scouting report based on this player&apos;s
+                      statistics and performance data.
+                    </p>
+                    <Button
+                      onClick={handleGenerateReport}
+                      label="Generate Scouting Report"
+                      className="!px-6 !py-3"
+                    />
+                  </>
+                ) : (
+                  <p className="text-textGrey">
+                    No scouting report available for this player.
+                  </p>
+                )}
               </div>
             )}
           </AccordionContent>

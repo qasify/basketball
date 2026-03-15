@@ -26,7 +26,7 @@ const Sidebar = () => {
         {/* Main Navigation */}
         <nav className="space-y-2">
           <h2 className="text-textLight text-standard font-[500] uppercase">
-            Main
+            Main Navigation
           </h2>
           <div className="flex flex-col gap-1">
             {navItems.map((item, index) => (
