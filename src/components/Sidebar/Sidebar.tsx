@@ -5,12 +5,13 @@ import NavItem from "./components/NavItem";
 // import SupportBox from "./components/SupportBox";
 import UserProfile from "./components/UserProfile";
 import { bottomNavItems, navItems } from "@/utils/constants/navItems";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { authDB } from "@/_api/firebase-api";
 
 const Sidebar = () => {
   const { user } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const pathList = pathname?.split("/") || [];
   const pathName = pathList[pathList.length - 1] ?? "";
@@ -69,7 +70,10 @@ const Sidebar = () => {
         <UserProfile
           name={user?.email?.split("@")[0] ?? ""}
           email={user?.email ?? ""}
-          handleLogout={authDB.logout}
+          handleLogout={async () => {
+            await authDB.logout();
+            router.push("/login");
+          }}
         />
       </div>
     </div>
