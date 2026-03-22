@@ -1,6 +1,6 @@
 /**
- * Activity feed item – who did what and when.
- * Frontend dummy model first; later can align with Firestore schema.
+ * Activity feed item — who did what and when.
+ * Firestore `activities` docs also store `actorUid` (rules); UI uses id + fields below.
  */
 export type ActivityActionType =
   | "WATCHLIST_ADDED"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import type { Activity } from "../../_types/Activity";
 import {
@@ -12,7 +12,7 @@ import {
   FileText,
   StickyNote,
   ClipboardList,
-  RefreshCw,
+  RefreshCw as ReportRefreshIcon,
 } from "lucide-react";
 
 const ACTION_ICONS: Record<Activity["actionType"], React.ReactNode> = {
@@ -20,44 +20,55 @@ const ACTION_ICONS: Record<Activity["actionType"], React.ReactNode> = {
   WATCHLIST_REMOVED: <UserPlus className="w-4 h-4" />,
   NOTE_SAVED: <StickyNote className="w-4 h-4" />,
   SCOUTING_REPORT_GENERATED: <FileText className="w-4 h-4" />,
-  SCOUTING_REPORT_UPDATED: <RefreshCw className="w-4 h-4" />,
+  SCOUTING_REPORT_UPDATED: <ReportRefreshIcon className="w-4 h-4" />,
   SCOUTING_REPORT_NOTES_SAVED: <ClipboardList className="w-4 h-4" />,
 };
 
+function ActivityRowSkeleton() {
+  return (
+    <li className="border-b border-white/10 last:border-b-0 py-2 animate-pulse">
+      <div className="flex items-start gap-4">
+        <div className="h-9 w-9 shrink-0 rounded-xl bg-white/10 mt-0.5" />
+        <div className="flex-1 min-w-0 space-y-2 py-2">
+          <div className="h-3.5 w-full max-w-md rounded bg-white/10" />
+          <div className="h-3 w-24 rounded bg-white/5" />
+        </div>
+      </div>
+    </li>
+  );
+}
+
 type ActivityFeedProps = {
   activities: Activity[];
+  pageIndex: number;
+  pageSize: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onPageChange: (index: number) => void;
+  listLoading?: boolean;
 };
 
-const ActivityFeed = ({ activities }: ActivityFeedProps) => {
-  const PAGE_SIZE = 6;
-  const [pageIndex, setPageIndex] = useState(0);
-
-  const totalItems = activities.length;
-  const pageCount = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-
-  useEffect(() => {
-    setPageIndex(0);
-  }, [totalItems]);
-
-  const currentPageActivities = useMemo(() => {
-    const start = pageIndex * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    return activities.slice(start, end);
-  }, [activities, pageIndex]);
-
-  const visiblePageNumbers = useMemo(() => {
-    // Show a compact pagination: current ±2, clamped to [1..pageCount]
-    const pages: number[] = [];
-    const start = Math.max(1, pageIndex + 1 - 2);
-    const end = Math.min(pageCount, pageIndex + 1 + 2);
-    for (let p = start; p <= end; p++) pages.push(p);
-    return pages;
-  }, [pageIndex, pageCount]);
+const ActivityFeed = ({
+  activities,
+  pageIndex,
+  pageSize,
+  hasPrev,
+  hasNext,
+  onPageChange,
+  listLoading = false,
+}: ActivityFeedProps) => {
+  const showPagination = hasPrev || hasNext;
+  const showCaughtUp =
+    !listLoading && activities.length > 0 && !hasNext;
 
   return (
     <div className="flex flex-col gap-4">
-      <ul className="space-y-0">
-        {currentPageActivities.map((activity) => {
+      <ul className="space-y-1">
+        {listLoading
+          ? Array.from({ length: pageSize }, (_, i) => (
+              <ActivityRowSkeleton key={`sk-${i}`} />
+            ))
+          : activities.map((activity) => {
           const who =
             activity.userDisplayName ?? activity.userEmail ?? "Someone";
           const actionLabel =
@@ -69,100 +80,82 @@ const ActivityFeed = ({ activities }: ActivityFeedProps) => {
               ? `/player-database/player-profile/${activity.playerId}`
               : null;
 
-        return (
-          <li
-            key={activity.id}
-            className="group flex gap-3 py-3 border-b border-white/10 last:border-b-0 transition-colors hover:bg-purplish/10"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purplish/15 text-purpleFill border border-purpleFill/25 transition-colors group-hover:bg-purplish/20">
-              {icon}
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-purpleFill font-semibold text-sm">
-                  {who}
-                </span>
-                <span className="text-white/90 text-sm">{actionLabel}</span>
+          return (
+            <li
+              key={activity.id}
+              className="border-b border-white/10 last:border-b-0 py-2 last:pb-2"
+            >
+              <div className="group flex items-start gap-4">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purplish/15 text-purpleFill border border-purpleFill/25 mt-0.5"
+                  aria-hidden
+                >
+                  {icon}
+                </div>
+                <div className="flex-1 min-w-0 rounded-xl px-3 py-2 transition-colors group-hover:bg-purplish/10">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-purpleFill font-semibold text-sm">
+                      {who}
+                    </span>
+                    <span className="text-white/90 text-sm">{actionLabel}</span>
 
-                {activity.playerName && (
-                  <>
-                    {playerLink ? (
-                      <Link
-                        href={playerLink}
-                        className="ml-1 text-purpleFill hover:underline font-semibold text-sm"
-                      >
-                        {activity.playerName}
-                      </Link>
-                    ) : (
-                      <span className="ml-1 text-white/80 text-sm font-medium">
-                        {activity.playerName}
-                      </span>
+                    {activity.playerName && (
+                      <>
+                        {playerLink ? (
+                          <Link
+                            href={playerLink}
+                            className="ml-1 text-purpleFill hover:underline font-semibold text-sm"
+                          >
+                            {activity.playerName}
+                          </Link>
+                        ) : (
+                          <span className="ml-1 text-white/80 text-sm font-medium">
+                            {activity.playerName}
+                          </span>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
+                  </div>
+
+                  <p className="text-textGrey text-xs mt-0.5">{time}</p>
+                </div>
               </div>
-
-              {activity.description && (
-                <p className="text-textGrey text-xs">{activity.description}</p>
-              )}
-
-              <p className="text-textGrey/90 text-xs mt-0.5">{time}</p>
-            </div>
-          </li>
-        );
-        })}
+            </li>
+          );
+            })}
       </ul>
 
-      {/* Pagination */}
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between gap-3 pt-2">
+      {showCaughtUp && (
+        <p className="text-textGrey text-xs text-center sm:text-left pt-1">
+          You&apos;re all caught up — no older activity to load.
+        </p>
+      )}
+
+      {showPagination && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-white/10">
           <div className="text-textGrey text-xs">
-            Page <span className="text-white/90">{pageIndex + 1}</span> of{" "}
-            <span className="text-white/90">{pageCount}</span>
+            Page <span className="text-white/90">{pageIndex + 1}</span>
+            <span className="text-textGrey/80"> · older updates on next pages</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
-              disabled={pageIndex === 0}
+              onClick={() => onPageChange(pageIndex - 1)}
+              disabled={!hasPrev || listLoading}
               className="px-3 py-2 rounded-lg border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-colors"
-              aria-label="Previous page"
+              aria-label="Newer activity"
             >
-              Prev
+              Newer
             </button>
-
-            <div className="hidden sm:flex items-center gap-2">
-              {visiblePageNumbers.map((p) => {
-                const isActive = p - 1 === pageIndex;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPageIndex(p - 1)}
-                    className={`px-3 py-2 rounded-lg border transition-colors ${
-                      isActive
-                        ? "bg-purplish/20 border-purpleFill/40 text-white"
-                        : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                    }`}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-
             <button
               type="button"
-              onClick={() =>
-                setPageIndex((p) => Math.min(pageCount - 1, p + 1))
-              }
-              disabled={pageIndex >= pageCount - 1}
+              onClick={() => onPageChange(pageIndex + 1)}
+              disabled={!hasNext || listLoading}
               className="px-3 py-2 rounded-lg border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-colors"
-              aria-label="Next page"
+              aria-label="Older activity"
             >
-              Next
+              Older
             </button>
           </div>
         </div>

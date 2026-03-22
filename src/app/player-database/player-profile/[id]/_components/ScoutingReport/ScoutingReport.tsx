@@ -13,6 +13,7 @@ import Button from "@/components/Button";
 import { Save } from "lucide-react";
 import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import { scoutingReportDB } from "@/_api/firebase-api";
+import { logActivity } from "@/_api/activity-api";
 import { useAuth } from "@/hooks/useAuth";
 import { isAdminEmail } from "@/utils/auth";
 
@@ -105,6 +106,12 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
       try {
         await scoutingReportDB.save(player.id, generatedReport);
         setLastUpdated(new Date().toISOString());
+        void logActivity({
+          actionType: "SCOUTING_REPORT_GENERATED",
+          playerId: player.id,
+          playerName: player.name,
+          description: "Generated scouting report",
+        }).catch(() => {});
       } catch (err) {
         console.error("Error saving scouting report to Firebase:", err);
       }
@@ -126,6 +133,12 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
     try {
       await scoutingReportDB.updateNotes(player.id, userNotes);
       setLastUpdated(new Date().toISOString());
+      void logActivity({
+        actionType: "SCOUTING_REPORT_NOTES_SAVED",
+        playerId: player.id,
+        playerName: player.name,
+        description: "Saved scouting report notes",
+      }).catch(() => {});
     } catch (err) {
       console.error("Error saving notes:", err);
     } finally {
@@ -143,6 +156,12 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
       await scoutingReportDB.save(player.id, updatedReport);
       setLastUpdated(new Date().toISOString());
       setAiPrompt("");
+      void logActivity({
+        actionType: "SCOUTING_REPORT_UPDATED",
+        playerId: player.id,
+        playerName: player.name,
+        description: "Updated scouting report with AI",
+      }).catch(() => {});
     } catch (err) {
       setExtendError(err instanceof Error ? err.message : "Failed to update report with AI.");
     } finally {
