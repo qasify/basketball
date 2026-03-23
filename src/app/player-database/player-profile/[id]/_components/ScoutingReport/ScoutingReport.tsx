@@ -60,7 +60,8 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
           // retrieve notes specific to the current user
           if (user?.email && saved.userNotes) {
             const emailKey = user.email.replace(/\./g, '_');
-            setUserNotes(saved.userNotes[emailKey] ?? "");
+            const notes = saved.userNotes as Record<string, string>;
+            setUserNotes(notes[emailKey] ?? "");
           } else {
             setUserNotes("");
           }
