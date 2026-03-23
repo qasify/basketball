@@ -29,8 +29,9 @@ export default function RootLayout({
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${poppins.className} ${inter.className} antialiased ${isAuthPage ? '' : 'flex'}`}
       >
         {!isAuthPage && <Sidebar />}

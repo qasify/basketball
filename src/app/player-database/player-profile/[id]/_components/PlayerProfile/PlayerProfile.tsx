@@ -63,16 +63,13 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
   }, [player?.seasons]);
 
   const seasonColumns: TableColumn<any>[] = [
-    // Identity
     { label: "Season", key: "season", isSortable: true },
     { label: "League", key: "league", isSortable: true },
     { label: "Team", key: "team", isSortable: true },
-    // Core box score
     { label: "GP", key: "gamesPlayed", isSortable: true },
     { label: "GS", key: "gamesStarted", isSortable: true },
     { label: "MIN", key: "minutesPerGame", isSortable: true },
     { label: "PTS", key: "pointsPerGame", isSortable: true },
-    // Shooting
     { label: "FGM", key: "fieldGoalsMade", isSortable: true },
     { label: "FGA", key: "fieldGoalsAttempted", isSortable: true },
     { label: "FG%", key: "fieldGoalPercent", isSortable: true },
@@ -82,11 +79,9 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
     { label: "FTM", key: "freeThrowsMade", isSortable: true },
     { label: "FTA", key: "freeThrowsAttempted", isSortable: true },
     { label: "FT%", key: "freeThrowPercent", isSortable: true },
-    // Rebounds
     { label: "OFF", key: "offensiveRebounds", isSortable: true },
     { label: "DEF", key: "defensiveRebounds", isSortable: true },
     { label: "TRB", key: "reboundsPerGame", isSortable: true },
-    // Playmaking / defense
     { label: "AST", key: "assistsPerGame", isSortable: true },
     { label: "STL", key: "stealsPerGame", isSortable: true },
     { label: "BLK", key: "blocksPerGame", isSortable: true },
@@ -112,14 +107,14 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
           <div className="flex justify-between items-center">
             <h2 className="text-3xl">{player?.name}</h2>
             <div className="flex gap-4 flex-wrap">
-              <Button className="!p-2" onClick={handleAddToWatchList} label="Add to Watchlist" />
+              <Button className="!p-2 rounded-lg" onClick={handleAddToWatchList} label="Add to Watchlist" />
               <Button
-                className="!p-2 rounded"
+                className="!p-2 rounded-lg"
                 icon={<FaStickyNote size={18} />}
                 label="Notes"
                 onClick={() => setIsNoteOpen(true)}
               />
-              <Button className="!p-2 rounded" icon={<FaEdit size={18} />} />
+              <Button className="!p-2 rounded-lg" icon={<FaEdit size={18} />} />
             </div>
           </div>
           <div className="flex flex-col flex-1 gap-2 justify-between">
@@ -131,7 +126,9 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
             <TextItem label="Weight" value={player?.weight} />
             <TextItem label="Status" value={player?.salary} />
             <TextItem label="Contract" value={player?.contract} />
-            <TextItem label="Seasons Played" value={player?.seasons?.length || 0} />
+            <TextItem label="Agency" value={player?.agency} />
+            {/* Task 10: Seasons Played commented out */}
+            {/* <TextItem label="Seasons Played" value={player?.seasons?.length || 0} /> */}
           </div>
         </div>
       </div>
