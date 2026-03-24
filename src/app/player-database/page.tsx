@@ -7,7 +7,7 @@ const PlayerDatabaseContent = dynamic(
   () => import("./_components/PlayerDatabaseContent"),
   {
     ssr: true,
-    loading: () => <>Loading...</>,
+    loading: () => <div className="min-h-[500px]" />,
   }
 );
 

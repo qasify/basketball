@@ -20,6 +20,8 @@ const inter = Inter({
   display: "swap",
 });
 
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,11 +36,21 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${poppins.className} ${inter.className} antialiased ${isAuthPage ? '' : 'flex'}`}
       >
-        {!isAuthPage && <Sidebar />}
-        <div className={`flex flex-col h-[100vh] overflow-auto ${isAuthPage ? 'w-full' : 'flex-1'}`}>
-          {!isAuthPage && <Header />}
-          {children}
-        </div>
+        {isAuthPage ? (
+          <div className="flex flex-col h-[100vh] overflow-auto w-full">
+            {children}
+          </div>
+        ) : (
+          <>
+            <Sidebar />
+            <div className="flex flex-col h-[100vh] overflow-auto flex-1">
+              <Header />
+              <ProtectedRoute>
+                {children}
+              </ProtectedRoute>
+            </div>
+          </>
+        )}
       </body>
     </html>
   );
