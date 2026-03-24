@@ -1,14 +1,15 @@
 import { NavItem } from "@/types/NavItem";
 
 export const navItems: NavItem[] = [
-  {
-    key: "home",
-    label: "Homepage",
-    icon: "/icons/sidebar/home.png",
-    url: "/dashboard",
-    width: 18,
-    height: 18,
-  },
+  // Homepage: no sidebar link; still reachable via /dashboard and default page
+  // {
+  //   key: "home",
+  //   label: "Homepage",
+  //   icon: "/icons/sidebar/home.png",
+  //   url: "/dashboard",
+  //   width: 18,
+  //   height: 18,
+  // },
   // {
   //   key: "teamManagement",
   //   label: "Team Management",
@@ -41,14 +42,15 @@ export const navItems: NavItem[] = [
   //   width: 18,
   //   height: 18,
   // },
-  {
-    key: "news",
-    label: "News",
-    icon: "/icons/sidebar/news.png",
-    url: "/news",
-    width: 18,
-    height: 18,
-  },
+  // News: no sidebar link; still reachable via /news
+  // {
+  //   key: "news",
+  //   label: "News",
+  //   icon: "/icons/sidebar/news.png",
+  //   url: "/news",
+  //   width: 18,
+  //   height: 18,
+  // },
 ];
 
 

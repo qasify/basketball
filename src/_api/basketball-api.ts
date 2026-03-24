@@ -102,6 +102,7 @@ export interface Player {
   pinned?: boolean;
   salary?: string;
   contract?: string;
+  agency?: string;
   image?: string;
   height?: string;
   weight?: string;
