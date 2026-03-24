@@ -1,6 +1,5 @@
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { useEffect, useRef, useState } from "react";
-import { Save } from "lucide-react";
 import Button from "@/components/Button";
 import { notesDB } from "@/_api/firebase-api";
 import { Textarea } from "../TextArea";
@@ -52,26 +51,23 @@ const NoteModal = ({
   if (!isOpen || !player) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed w-[100vw] h-[100vh] inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
       <div
         ref={ref}
-        className="backdrop-blur-[10px] p-6 rounded-xl w-[500px] max-w-[calc(100vw-2rem)] border border-purplish bg-card-radial text-white shadow-xl flex flex-col gap-4"
+        className="backdrop-blur-[10px] p-5 rounded-lg w-[500px] bg-card-radial text-white shadow-lg relative flex flex-col gap-4"
       >
-        <h2 className="text-xl font-semibold text-white border-b border-white/10 pb-3">
-          Notes for {player?.name}
-        </h2>
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Enter notes here..."
-          className="min-h-[200px] rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y focus:border-purplish focus:ring-1 focus:ring-purplish/50 outline-none transition-colors"
-        />
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="flex flex-col justify-between items-center gap-2">
+          <h2 className="text-3xl">Notes for {player?.name}</h2>
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Enter notes here..."
+            className="min-h-[200px]"
+          />
           <Button
-            icon={<Save className="w-4 h-4 shrink-0" aria-hidden />}
+            className="!py-2 rounded bg-white text-black"
             label="Save"
             onClick={handleSave}
-            className="!px-5 !py-2.5 !bg-purplish hover:!bg-purpleFill !text-white !border-purpleFill/50 rounded-lg transition-colors w-full sm:w-auto"
           />
         </div>
       </div>
