@@ -21,9 +21,28 @@ import {
 
 const auth = getAuth();
 
+export const usersDB = {
+  getRole: async (uid: string): Promise<"admin" | "user"> => {
+    const q = query(collection(db, "users"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length > 0) {
+      return querySnapshot.docs[0].data().role || "user";
+    }
+    return "user";
+  },
+  createUser: async (uid: string, email: string) => {
+    await addDoc(collection(db, "users"), {
+      uid,
+      email,
+      role: "user"
+    });
+  }
+};
+
 export const authDB = {
   register: async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    await usersDB.createUser(credential.user.uid, email);
   },
 
   login: async (email: string, password: string) => {
@@ -62,37 +81,49 @@ export interface ScoutingReportRecord {
   report: ScoutingReport;
   updatedAt: string; // ISO timestamp
   /** User-added notes or additional information for the scouting report */
-  userNotes?: string;
+  userNotes?: Record<string, string>;
 }
 
 export const watchListDB = {
   add: async (player: Player) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+
     const q = query(
       collection(db, WATCHLIST_COLLECTION),
-      where("id", "==", player.id)
+      where("id", "==", player.id),
+      where("userEmail", "==", userEmail)
     );
     const querySnapshot = await getDocs(q);
     if (querySnapshot.docs.length === 0) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { isInTeam, isInWatchlist, ...otherData } = player;
-      await addDoc(collection(db, WATCHLIST_COLLECTION), otherData);
+      await addDoc(collection(db, WATCHLIST_COLLECTION), { ...otherData, userEmail });
     }
   },
   getAll: async () => {
-    const querySnapshot = await getDocs(collection(db, WATCHLIST_COLLECTION));
-    const players = await Promise.all(
-    querySnapshot.docs.map(async (doc) => {
-      const data = doc.data();
-      const notes = await notesDB.get(data.id);
-      return {
-        documentId: doc.id,
-        ...data,
-        notes,
-      } as FBPlayer;
-    })
-  );
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return [];
 
-  return players;
+    const q = query(
+      collection(db, WATCHLIST_COLLECTION),
+      where("userEmail", "==", userEmail)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    const players = await Promise.all(
+      querySnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const notes = await notesDB.get(data.id);
+        return {
+          documentId: doc.id,
+          ...data,
+          notes,
+        } as FBPlayer;
+      })
+    );
+
+    return players;
   },
   remove: async (documentId: string) => {
     const docRef = doc(db, WATCHLIST_COLLECTION, documentId);
@@ -150,6 +181,8 @@ export const scoutingReportDB = {
   },
   /** Update only user-added notes (and last updated). Report must already exist. */
   updateNotes: async (playerId: number, userNotes: string) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
     const now = new Date().toISOString();
     const q = query(
       collection(db, SCOUTING_REPORT_COLLECTION),
@@ -158,25 +191,37 @@ export const scoutingReportDB = {
     const querySnapshot = await getDocs(q);
     if (querySnapshot.docs.length === 0) return;
     const docRef = doc(db, SCOUTING_REPORT_COLLECTION, querySnapshot.docs[0].id);
-    await updateDoc(docRef, { userNotes, updatedAt: now });
+    // User dot notation to update the map field for the specific user
+    await updateDoc(docRef, { [`userNotes.${userEmail.replace(/\./g, '_')}`]: userNotes, updatedAt: now });
   },
 };
 
 export const teamRosterDB = {
   add: async (player: Player) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+
     const q = query(
       collection(db, TEAM_ROSTER_COLLECTION),
-      where("id", "==", player.id)
+      where("id", "==", player.id),
+      where("userEmail", "==", userEmail)
     );
     const querySnapshot = await getDocs(q);
     if (querySnapshot.docs.length === 0) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { isInTeam, isInWatchlist, ...otherData } = player;
-      await addDoc(collection(db, TEAM_ROSTER_COLLECTION), otherData);
+      await addDoc(collection(db, TEAM_ROSTER_COLLECTION), { ...otherData, userEmail });
     }
   },
   getAll: async () => {
-    const querySnapshot = await getDocs(collection(db, TEAM_ROSTER_COLLECTION));
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return [];
+
+    const q = query(
+      collection(db, TEAM_ROSTER_COLLECTION),
+      where("userEmail", "==", userEmail)
+    );
+    const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(
       (doc) =>
         ({
@@ -201,34 +246,45 @@ export const teamRosterDB = {
 
 export const notesDB = {
   add: async (playerId: number, note: string) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+
     const q = query(
       collection(db, NOTE_COLLECTION),
       where("id", "==", playerId)
     );
     const querySnapshot = await getDocs(q);
-    if (querySnapshot.docs.length === 0) {
+    const existingDoc = querySnapshot.docs.find(doc => doc.data().user === userEmail);
+
+    if (!existingDoc) {
       await addDoc(collection(db, NOTE_COLLECTION), {
         id: playerId,
         note,
-        user: auth.currentUser?.email,
+        user: userEmail,
       });
     } else {
-      const docRef = doc(db, NOTE_COLLECTION, querySnapshot.docs[0].id);
+      const docRef = doc(db, NOTE_COLLECTION, existingDoc.id);
       await updateDoc(docRef, {
         note,
       });
     }
   },
   get: async (playerId: number) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return undefined;
+
     const q = query(
       collection(db, NOTE_COLLECTION),
       where("id", "==", playerId)
     );
     const querySnapshot = await getDocs(q);
-    if (querySnapshot.docs.length > 0) {
-      return querySnapshot.docs.map((doc) => {
-        return doc.data() as Note;
-      });
+    
+    const userNotes = querySnapshot.docs
+      .map((doc) => doc.data() as Note)
+      .filter((note) => note.user === userEmail);
+
+    if (userNotes.length > 0) {
+      return userNotes;
     } else {
       return undefined;
     }

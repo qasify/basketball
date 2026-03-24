@@ -20,8 +20,7 @@ type ScoutingReportProps = {
 };
 
 const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
-  const { user, loading: authLoading } = useAuth();
-
+  const { user, role, loading: authLoading } = useAuth();
   const [report, setReport] = useState<ScoutingReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,9 +57,13 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         if (saved) {
           setReport(saved.report);
           setLastUpdated(saved.updatedAt);
-          setUserNotes(
-            typeof saved.userNotes === "string" ? saved.userNotes : ""
-          );
+          // retrieve notes specific to the current user
+          if (user?.email && saved.userNotes) {
+            const emailKey = user.email.replace(/\./g, '_');
+            setUserNotes(saved.userNotes[emailKey] ?? "");
+          } else {
+            setUserNotes("");
+          }
           setIsExpanded(true);
         } else {
           setReport(null);
@@ -82,7 +85,7 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
     return () => {
       cancelled = true;
     };
-  }, [player?.id, authLoading]);
+  }, [player?.id, authLoading, user?.email]);
 
   const handleGenerateReport = async () => {
     if (!player) return;
@@ -274,33 +277,35 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                     </p>
                   )}
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2 text-purple-300">
-                      Ask AI to add to this report
-                    </h3>
-                    <p className="text-sm text-textGrey mb-2">
-                      Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                        placeholder="e.g. Add more on his pick-and-roll defense"
-                        className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
-                        disabled={isExtending}
-                      />
-                      <Button
-                        onClick={handleAskAiToExtend}
-                        label={isExtending ? "Updating..." : "Update report with AI"}
-                        className="!px-4 !py-2 shrink-0"
-                        {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
-                      />
+                  {role === 'admin' && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 text-purple-300">
+                        Ask AI to add to this report
+                      </h3>
+                      <p className="text-sm text-textGrey mb-2">
+                        Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="e.g. Add more on his pick-and-roll defense"
+                          className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
+                          disabled={isExtending}
+                        />
+                        <Button
+                          onClick={handleAskAiToExtend}
+                          label={isExtending ? "Updating..." : "Update report with AI"}
+                          className="!px-4 !py-2 shrink-0"
+                          {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
+                        />
+                      </div>
+                      {extendError && (
+                        <p className="text-sm text-red-400 mt-2">{extendError}</p>
+                      )}
                     </div>
-                    {extendError && (
-                      <p className="text-sm text-red-400 mt-2">{extendError}</p>
-                    )}
-                  </div>
+                  )}
 
                   <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold mb-2 text-purple-300">
@@ -338,14 +343,17 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
             {!report && !busyLoading && !error && (
               <div className="text-center py-8">
                 <p className="text-textGrey mb-4">
-                  Generate an AI-powered scouting report based on this player&apos;s
-                  statistics and performance data.
+                  {role === 'admin' 
+                    ? "Generate an AI-powered scouting report based on this player's statistics and performance data." 
+                    : "No scouting report available for this player yet."}
                 </p>
-                <Button
-                  onClick={handleGenerateReport}
-                  label="Generate Scouting Report"
-                  className="!px-6 !py-3"
-                />
+                {role === 'admin' && (
+                  <Button
+                    onClick={handleGenerateReport}
+                    label="Generate Scouting Report"
+                    className="!px-6 !py-3"
+                  />
+                )}
               </div>
             )}
           </AccordionContent>
