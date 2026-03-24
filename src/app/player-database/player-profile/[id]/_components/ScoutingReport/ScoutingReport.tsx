@@ -10,17 +10,14 @@ import {
   AccordionTrigger,
 } from "@/components/Accordion";
 import Button from "@/components/Button";
-import { Save } from "lucide-react";
 import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import { scoutingReportDB } from "@/_api/firebase-api";
-import { useAuth } from "@/hooks/useAuth";
 
 type ScoutingReportProps = {
   player: Player | null;
 };
 
 const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
-  const { user, role, loading: authLoading } = useAuth();
   const [report, setReport] = useState<ScoutingReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,60 +29,29 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
   const [isExtending, setIsExtending] = useState(false);
   const [extendError, setExtendError] = useState<string | null>(null);
 
+  // Load existing scouting report for this user + player if available
   useEffect(() => {
-    const clear = () => {
-      setReport(null);
-      setLastUpdated(null);
-      setUserNotes("");
-      setError(null);
-      setIsLoading(false);
-    };
-
-    if (!player || authLoading) {
-      if (!player) clear();
-      return;
-    }
-
-    // Load even when logged out — matches public read on `scouting-report` in Firestore rules
-    let cancelled = false;
-    (async () => {
+    const loadSavedReport = async () => {
+      if (!player) return;
       try {
         setIsLoading(true);
         setError(null);
         const saved = await scoutingReportDB.get(player.id);
-        if (cancelled) return;
         if (saved) {
           setReport(saved.report);
           setLastUpdated(saved.updatedAt);
-          // retrieve notes specific to the current user
-          if (user?.email && saved.userNotes) {
-            const emailKey = user.email.replace(/\./g, '_');
-            setUserNotes(saved.userNotes[emailKey] ?? "");
-          } else {
-            setUserNotes("");
-          }
+          setUserNotes(saved.userNotes ?? "");
           setIsExpanded(true);
-        } else {
-          setReport(null);
-          setLastUpdated(null);
-          setUserNotes("");
         }
       } catch (err) {
-        if (!cancelled) {
-          console.error("Error loading saved scouting report:", err);
-          setError(
-            err instanceof Error ? err.message : "Failed to load scouting report."
-          );
-        }
+        console.error("Error loading saved scouting report:", err);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        setIsLoading(false);
       }
-    })();
-
-    return () => {
-      cancelled = true;
     };
-  }, [player?.id, authLoading, user?.email]);
+
+    loadSavedReport();
+  }, [player]);
 
   const handleGenerateReport = async () => {
     if (!player) return;
@@ -117,7 +83,7 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
   };
 
   const handleSaveNotes = async () => {
-    if (!player || !report || savingNotes || !user) return;
+    if (!player || !report || savingNotes) return;
     setSavingNotes(true);
     try {
       await scoutingReportDB.updateNotes(player.id, userNotes);
@@ -148,8 +114,6 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
 
   if (!player) return null;
 
-  const busyLoading = isLoading || authLoading;
-
   return (
     <div className="backdrop-blur-[10px] p-5 rounded-lg w-full bg-transparent border border-purplish text-white shadow-lg">
       <AccordionContainer
@@ -164,10 +128,10 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
             Scouting Report
           </AccordionTrigger>
           <AccordionContent className="pt-4">
-            {busyLoading && (
+            {isLoading && (
               <div className="flex flex-col items-center justify-center py-8 gap-4">
                 <FaSpinner className="animate-spin text-purple-400" size={32} />
-                <p className="text-textGrey">Loading…</p>
+                <p className="text-textGrey">Analyzing player data...</p>
               </div>
             )}
 
@@ -186,7 +150,7 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
               </div>
             )}
 
-            {report && !busyLoading && (
+            {report && !isLoading && (
               <div className="space-y-6">
                 {/* Summary */}
                 <div>
@@ -277,83 +241,70 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
                     </p>
                   )}
 
-                  {role === 'admin' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2 text-purple-300">
-                        Ask AI to add to this report
-                      </h3>
-                      <p className="text-sm text-textGrey mb-2">
-                        Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
-                      </p>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="text"
-                          value={aiPrompt}
-                          onChange={(e) => setAiPrompt(e.target.value)}
-                          placeholder="e.g. Add more on his pick-and-roll defense"
-                          className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
-                          disabled={isExtending}
-                        />
-                        <Button
-                          onClick={handleAskAiToExtend}
-                          label={isExtending ? "Updating..." : "Update report with AI"}
-                          className="!px-4 !py-2 shrink-0"
-                          {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
-                        />
-                      </div>
-                      {extendError && (
-                        <p className="text-sm text-red-400 mt-2">{extendError}</p>
-                      )}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 text-purple-300">
+                      Ask AI to add to this report
+                    </h3>
+                    <p className="text-sm text-textGrey mb-2">
+                      Send a short instruction (e.g. &quot;Focus on his defense&quot;, &quot;Compare with similar PGs&quot;) and the AI will update the report accordingly.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="e.g. Add more on his pick-and-roll defense"
+                        className="flex-1 rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 px-3 py-2 text-sm"
+                        disabled={isExtending}
+                      />
+                      <Button
+                        onClick={handleAskAiToExtend}
+                        label={isExtending ? "Updating..." : "Update report with AI"}
+                        className="!px-4 !py-2 shrink-0"
+                        {...((isExtending || !aiPrompt.trim()) && { "aria-disabled": true })}
+                      />
                     </div>
-                  )}
+                    {extendError && (
+                      <p className="text-sm text-red-400 mt-2">{extendError}</p>
+                    )}
+                  </div>
 
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-300">
                       Add your own notes
                     </h3>
-                    <p className="text-sm text-textGrey mb-3">
+                    <p className="text-sm text-textGrey mb-2">
                       Add notes or context that stay with this report (e.g. viewing notes, follow-up).
                     </p>
-                    {!user && (
-                      <p className="text-xs text-textGrey mb-2">
-                        Sign in to add or save notes.
-                      </p>
-                    )}
                     <textarea
-                      value={typeof userNotes === "string" ? userNotes : ""}
+                      value={userNotes}
                       onChange={(e) => setUserNotes(e.target.value)}
                       placeholder="Type your notes here..."
                       rows={4}
-                      disabled={!user}
-                      className="w-full rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y min-h-[100px] focus:border-purplish focus:ring-1 focus:ring-purplish/50 outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full rounded-lg border border-white/30 bg-white/5 text-white placeholder:text-white/50 p-3 text-sm resize-y min-h-[100px]"
                     />
                     <Button
                       onClick={handleSaveNotes}
-                      iconAlignment="right"
-                      icon={<Save className="w-4 h-4 shrink-0" aria-hidden />}
                       label={savingNotes ? "Saving..." : "Save notes"}
-                      className="!px-5 !py-2.5 mt-3 !bg-purplish/10 hover:!bg-purplish/20 !text-white !border !border-purpleFill/60 rounded-lg transition-colors disabled:opacity-70"
-                      {...((savingNotes || !user) && { "aria-disabled": true })}
+                      className="!px-4 !py-2 mt-2"
+                      {...(savingNotes && { "aria-disabled": true })}
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {!report && !busyLoading && !error && (
+            {!report && !isLoading && !error && (
               <div className="text-center py-8">
                 <p className="text-textGrey mb-4">
-                  {role === 'admin' 
-                    ? "Generate an AI-powered scouting report based on this player's statistics and performance data." 
-                    : "No scouting report available for this player yet."}
+                  Generate an AI-powered scouting report based on this player's
+                  statistics and performance data.
                 </p>
-                {role === 'admin' && (
-                  <Button
-                    onClick={handleGenerateReport}
-                    label="Generate Scouting Report"
-                    className="!px-6 !py-3"
-                  />
-                )}
+                <Button
+                  onClick={handleGenerateReport}
+                  label="Generate Scouting Report"
+                  className="!px-6 !py-3"
+                />
               </div>
             )}
           </AccordionContent>

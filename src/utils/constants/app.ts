@@ -1,7 +1,7 @@
 export const appConstants: Record<string, string> = {
   appName: "Basketball Manager",
   defaultTitle: "Dashboard",
-  dashboard: "Dashboard",
+  dashboard: "Homepage",
   // "team-management": "Team Management",
   "budget-tracking": "Team Management",
   "player-database": "Player Database",
