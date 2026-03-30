@@ -32,11 +32,40 @@ export const usersDB = {
     }
     return "user";
   },
+  getProfile: async (uid: string) => {
+    const q = query(collection(db, "users"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length > 0) {
+      return querySnapshot.docs[0].data() as {
+        uid: string;
+        email: string;
+        role: "admin" | "user";
+        displayName?: string;
+        createdAt?: string;
+      };
+    }
+    return null;
+  },
+  updateDisplayName: async (uid: string, displayName: string) => {
+    const q = query(collection(db, "users"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length > 0) {
+      const docRef = doc(db, "users", querySnapshot.docs[0].id);
+      await updateDoc(docRef, { displayName });
+    }
+    // Also update Firebase Auth profile
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const { updateProfile } = await import("firebase/auth");
+      await updateProfile(currentUser, { displayName });
+    }
+  },
   createUser: async (uid: string, email: string) => {
     await addDoc(collection(db, "users"), {
       uid,
       email,
-      role: "user"
+      role: "user",
+      createdAt: new Date().toISOString(),
     });
   }
 };
