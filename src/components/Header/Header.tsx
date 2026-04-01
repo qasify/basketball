@@ -144,6 +144,10 @@ const Header = () => {
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             autoComplete="off" // Prevent browser autocomplete interference
+            name="player-search"
+            id="player-search"
+            spellCheck={false}
+            autoCorrect="off"
           />
           {showDropdown && (
             <div className="absolute top-full left-0 right-0 mt-1 w-full bg-nav-gradient border border-searchBorder rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
@@ -192,13 +196,15 @@ const Header = () => {
             height={24}
           />
         </Link>
-        <Image
-          src="/icons/avatar-placeholder.png"
-          alt="User"
-          width={40}
-          height={40}
-          className="w-10 h-10 rounded-full"
-        />
+        <Link href="/profile" aria-label="My profile">
+          <Image
+            src="/icons/avatar.png"
+            alt="My profile"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-full hover:opacity-80 transition-opacity"
+          />
+        </Link>
       </div>
     </div>
   );
