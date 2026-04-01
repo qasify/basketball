@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "generated": "2026-03-30",
+    "total_free_agents": 115,
+    "tiers": { "tier1_euroleague": 6, "tier2_bcl_eurocup": 64, "tier3_domestic": 45 },
+    "stats_matched": 21
+  },
+  "free_agents": { "tier1": [], "tier2": [], "tier3": [] },
+  "team_openings": [],
+  "_note": "PLACEHOLDER - replace with full free_agents.json from HOOPROSTER/free-agent-tracker/repo-integration/public/data/"
+}
