@@ -41,7 +41,7 @@ const NoteModal = ({
   const handleSave = async () => {
     if (player) {
       try {
-        await notesDB.add(player.id, note);
+        await notesDB.add(player.id, note, player.name);
         onClose();
       } catch {
         console.error("Error adding note");

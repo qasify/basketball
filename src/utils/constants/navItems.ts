@@ -51,6 +51,14 @@ export const navItems: NavItem[] = [
   //   width: 18,
   //   height: 18,
   // },
+  {
+    key: "activityFeed",
+    label: "Activity Feed",
+    icon: "/icons/sidebar/activityFeed.png",
+    url: "/activity-feed",
+    width: 24,
+    height: 18,
+  },
 ];
 
 
