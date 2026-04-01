@@ -27,22 +27,21 @@ export const navItems: NavItem[] = [
     height: 18,
   },
   {
+    key: "freeAgents",
+    label: "Free Agents",
+    icon: "/icons/sidebar/freeAgents.png",
+    url: "/free-agents",
+    width: 18,
+    height: 18,
+  },
+  {
     key: "watchlist",
     label: "Watchlist",
     icon: "/icons/sidebar/watchlist.png",
     url: "/watchlist",
     width: 22,
-    height: 18,
+    height: 17,
   },
-  // {
-  //   key: "notifications",
-  //   label: "Notifications",
-  //   icon: "/icons/sidebar/notifications.png",
-  //   url: "/notifications",
-  //   width: 18,
-  //   height: 18,
-  // },
-  // News: no sidebar link; still reachable via /news
   // {
   //   key: "news",
   //   label: "News",
@@ -52,7 +51,6 @@ export const navItems: NavItem[] = [
   //   height: 18,
   // },
 ];
-
 
 export const bottomNavItems: NavItem[] = [
   {
