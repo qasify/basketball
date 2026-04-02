@@ -76,13 +76,13 @@ function SortHeader({
       onClick={() => onSort(sortKey)}
     >
       {label}
-      {active && (currentDir === 1 ? " \u25B2" : " \u25BC")}
+      {active && (currentDir === 1 ? " ▲" : " ▼")}
     </th>
   );
 }
 
 // ---- Main Component ----
-export default function FreeAgentContent({ data }: { data: FreeAgentData }) {
+export default function FreeAgentContent({ data, isAdmin = false }: { data: FreeAgentData; isAdmin?: boolean }) {
   const [tab, setTab] = useState<"fa" | "openings">("fa");
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("");
@@ -138,9 +138,13 @@ export default function FreeAgentContent({ data }: { data: FreeAgentData }) {
   }, [data.teamOpenings, openingsSearch]);
 
   const exportCSV = () => {
-    const rows = [["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Tier","Confidence"]];
+    const headers = ["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Tier"];
+    if (isAdmin) headers.push("Confidence");
+    const rows = [headers];
     data.freeAgents.forEach((p) => {
-      rows.push([p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), p.tierLabel, p.confidence]);
+      const row = [p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), p.tierLabel];
+      if (isAdmin) row.push(p.confidence);
+      rows.push(row);
     });
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -154,23 +158,24 @@ export default function FreeAgentContent({ data }: { data: FreeAgentData }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div><p className="text-xs text-textLight mt-1">Season 2025-26 | Data as of {data.metadata.generated} | {data.metadata.totalFreeAgents} verified free agents | {data.teamOpenings.length} teams with open spots{data.metadata.statsMatched > 0 && ` | ${data.metadata.statsMatched} with stats`}</p></div>
+      <div><p className="text-xs text-textLight mt-1">Season 2025-26 | Data as of {data.metadata.generated} | {data.metadata.totalFreeAgents} verified free agents{isAdmin && ` | ${data.teamOpenings.length} teams with open spots`}{isAdmin && data.metadata.statsMatched > 0 && ` | ${data.metadata.statsMatched} with stats`}</p></div>
       <div className="flex gap-4 flex-wrap">
         <KpiCard value={data.metadata.totalFreeAgents} label="Free Agents" />
         <KpiCard value={data.metadata.tiers.tier1} label="EuroLeague" />
         <KpiCard value={data.metadata.tiers.tier2} label="BCL/EuroCup" />
         <KpiCard value={data.metadata.tiers.tier3} label="Domestic" />
-        <KpiCard value={data.teamOpenings.length} label="Openings" />
+        {isAdmin && <KpiCard value={data.teamOpenings.length} label="Openings" />}
       </div>
       <div className="flex border-b border-borderLight">
-        {(["fa", "openings"] as const).map((t) => (<button key={t} className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === t ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab(t)}>{t === "fa" ? "Free Agents" : "Team Openings"}</button>))}
+        <button className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === "fa" ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab("fa")}>Free Agents</button>
+        {isAdmin && <button className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === "openings" ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab("openings")}>Team Openings</button>}
       </div>
       {tab === "fa" && (<>
         <div className="flex gap-3 flex-wrap items-center">
           <input type="text" placeholder="Search by name, team, nationality..." className={`${inputClasses} w-60`} value={search} onChange={(e) => setSearch(e.target.value)} />
           <select className={inputClasses} value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}><option value="">All Tiers</option><option value="1">Tier 1 - EuroLeague</option><option value="2">Tier 2 - BCL/EuroCup</option><option value="3">Tier 3 - Domestic</option></select>
           <select className={inputClasses} value={posFilter} onChange={(e) => setPosFilter(e.target.value)}><option value="">All Positions</option><option value="G">Guards</option><option value="F">Forwards</option><option value="C">Centers</option></select>
-          <select className={inputClasses} value={confFilter} onChange={(e) => setConfFilter(e.target.value)}><option value="">All Confidence</option><option value="HIGH">HIGH only</option><option value="MEDIUM">MEDIUM only</option></select>
+          {isAdmin && <select className={inputClasses} value={confFilter} onChange={(e) => setConfFilter(e.target.value)}><option value="">All Confidence</option><option value="HIGH">HIGH only</option><option value="MEDIUM">MEDIUM only</option></select>}
           <button onClick={exportCSV} className="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-xs font-semibold transition-colors">Export CSV</button>
         </div>
         <p className="text-xs text-textLight">Showing {filteredPlayers.length} of {data.freeAgents.length} free agents</p>
@@ -189,7 +194,7 @@ export default function FreeAgentContent({ data }: { data: FreeAgentData }) {
               <SortHeader label="FG%" sortKey="fgp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               <SortHeader label="3P%" sortKey="tpp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               <SortHeader label="Tier" sortKey="tier" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
-              <SortHeader label="Conf" sortKey="confidence" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
+              {isAdmin && <SortHeader label="Conf" sortKey="confidence" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />}
             </tr></thead>
             <tbody>
               {filteredPlayers.map((p, i) => (<tr key={i} className="hover:bg-white/5 border-b border-borderLight">
@@ -205,13 +210,13 @@ export default function FreeAgentContent({ data }: { data: FreeAgentData }) {
                 <StatCell value={formatPct(p.stats?.fgp ?? null)} hasData={!!p.stats} />
                 <StatCell value={formatPct(p.stats?.tpp ?? null)} hasData={!!p.stats} />
                 <td className="px-3 py-2"><Badge variant={`t${p.tier}`}>{p.tierLabel}</Badge></td>
-                <td className="px-3 py-2"><Badge variant={p.confidence.toLowerCase()}>{p.confidence}</Badge></td>
+                {isAdmin && <td className="px-3 py-2"><Badge variant={p.confidence.toLowerCase()}>{p.confidence}</Badge></td>}
               </tr>))}
             </tbody>
           </table>
         </div>
       </>)}
-      {tab === "openings" && (<>
+      {tab === "openings" && isAdmin && (<>
         <div><input type="text" placeholder="Search teams or leagues..." className={`${inputClasses} w-60`} value={openingsSearch} onChange={(e) => setOpeningsSearch(e.target.value)} /></div>
         <p className="text-xs text-textLight">{filteredOpenings.length} teams with open roster spots</p>
         <div className="overflow-x-auto rounded-lg border border-borderLight">
