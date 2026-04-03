@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { FreeAgent, TeamOpening, FreeAgentData } from "../_types";
 import { formatStat, formatPct } from "../_utils";
 
@@ -76,8 +76,21 @@ function SortHeader({
       onClick={() => onSort(sortKey)}
     >
       {label}
-      {active && (currentDir === 1 ? " ▲" : " ▼")}
+      {active && (currentDir === 1 ? " \u25B2" : " \u25BC")}
     </th>
+  );
+}
+
+// ---- Watchlist Star Button ----
+function WatchlistBtn({ active, onClick }: { active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className={`text-lg leading-none transition-colors ${active ? "text-yellow-400" : "text-white/15 hover:text-yellow-400/60"}`}
+      title={active ? "Remove from Watchlist" : "Add to Watchlist"}
+    >
+      {active ? "\u2605" : "\u2606"}
+    </button>
   );
 }
 
@@ -88,9 +101,11 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
   const [tierFilter, setTierFilter] = useState("");
   const [posFilter, setPosFilter] = useState("");
   const [confFilter, setConfFilter] = useState("");
+  const [natFilter, setNatFilter] = useState("");
   const [sortCol, setSortCol] = useState("tier");
   const [sortDir, setSortDir] = useState(1);
   const [openingsSearch, setOpeningsSearch] = useState("");
+  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
 
   const handleSort = (col: string) => {
     if (sortCol === col) setSortDir((d) => d * -1);
@@ -99,6 +114,21 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
       setSortDir(1);
     }
   };
+
+  const toggleWatchlist = useCallback((name: string) => {
+    setWatchlist((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  // Extract unique nationalities for filter dropdown
+  const nationalities = useMemo(() => {
+    const nats = new Set(data.freeAgents.map((p) => p.nationality));
+    return Array.from(nats).sort();
+  }, [data.freeAgents]);
 
   const filteredPlayers = useMemo(() => {
     let result = data.freeAgents.filter((p) => {
@@ -112,13 +142,17 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
         if (posFilter === "F" && !/F|SF|PF/.test(p.position)) return false;
         if (posFilter === "C" && !/C/.test(p.position)) return false;
       }
+      if (natFilter && p.nationality !== natFilter) return false;
       if (confFilter && p.confidence !== confFilter) return false;
       return true;
     });
     const statCols = ["pts", "trb", "ast", "fgp", "tpp"];
     result.sort((a, b) => {
       let va: any, vb: any;
-      if (statCols.includes(sortCol)) {
+      if (sortCol === "watchlist") {
+        va = watchlist.has(a.name) ? 1 : 0;
+        vb = watchlist.has(b.name) ? 1 : 0;
+      } else if (statCols.includes(sortCol)) {
         va = a.stats?.[sortCol as keyof typeof a.stats] ?? -999;
         vb = b.stats?.[sortCol as keyof typeof b.stats] ?? -999;
       } else {
@@ -130,7 +164,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
       return 0;
     });
     return result;
-  }, [data.freeAgents, search, tierFilter, posFilter, confFilter, sortCol, sortDir]);
+  }, [data.freeAgents, search, tierFilter, posFilter, natFilter, confFilter, sortCol, sortDir, watchlist]);
 
   const filteredOpenings = useMemo(() => {
     const q = openingsSearch.toLowerCase();
@@ -138,11 +172,11 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
   }, [data.teamOpenings, openingsSearch]);
 
   const exportCSV = () => {
-    const headers = ["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Tier"];
+    const headers = ["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Tier","Watchlist"];
     if (isAdmin) headers.push("Confidence");
     const rows = [headers];
     data.freeAgents.forEach((p) => {
-      const row = [p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), p.tierLabel];
+      const row = [p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), p.tierLabel, watchlist.has(p.name) ? "Yes" : ""];
       if (isAdmin) row.push(p.confidence);
       rows.push(row);
     });
@@ -165,6 +199,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
         <KpiCard value={data.metadata.tiers.tier2} label="BCL/EuroCup" />
         <KpiCard value={data.metadata.tiers.tier3} label="Domestic" />
         {isAdmin && <KpiCard value={data.teamOpenings.length} label="Openings" />}
+        {watchlist.size > 0 && <KpiCard value={watchlist.size} label="Watchlist" />}
       </div>
       <div className="flex border-b border-borderLight">
         <button className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === "fa" ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab("fa")}>Free Agents</button>
@@ -175,13 +210,15 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
           <input type="text" placeholder="Search by name, team, nationality..." className={`${inputClasses} w-60`} value={search} onChange={(e) => setSearch(e.target.value)} />
           <select className={inputClasses} value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}><option value="">All Tiers</option><option value="1">Tier 1 - EuroLeague</option><option value="2">Tier 2 - BCL/EuroCup</option><option value="3">Tier 3 - Domestic</option></select>
           <select className={inputClasses} value={posFilter} onChange={(e) => setPosFilter(e.target.value)}><option value="">All Positions</option><option value="G">Guards</option><option value="F">Forwards</option><option value="C">Centers</option></select>
+          <select className={inputClasses} value={natFilter} onChange={(e) => setNatFilter(e.target.value)}><option value="">All Nationalities</option>{nationalities.map((n) => <option key={n} value={n}>{n}</option>)}</select>
           {isAdmin && <select className={inputClasses} value={confFilter} onChange={(e) => setConfFilter(e.target.value)}><option value="">All Confidence</option><option value="HIGH">HIGH only</option><option value="MEDIUM">MEDIUM only</option></select>}
           <button onClick={exportCSV} className="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-xs font-semibold transition-colors">Export CSV</button>
         </div>
-        <p className="text-xs text-textLight">Showing {filteredPlayers.length} of {data.freeAgents.length} free agents</p>
+        <p className="text-xs text-textLight">Showing {filteredPlayers.length} of {data.freeAgents.length} free agents{watchlist.size > 0 && ` | ${watchlist.size} in watchlist`}</p>
         <div className="overflow-x-auto rounded-lg border border-borderLight">
           <table className="w-full border-collapse">
             <thead className="bg-white/5"><tr>
+              <SortHeader label={"\u2606"} sortKey="watchlist" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
               <SortHeader label="Name" sortKey="name" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
               <SortHeader label="Pos" sortKey="position" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
               <SortHeader label="Ht" sortKey="height" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
@@ -198,6 +235,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
             </tr></thead>
             <tbody>
               {filteredPlayers.map((p, i) => (<tr key={i} className="hover:bg-white/5 border-b border-borderLight">
+                <td className="px-3 py-2 text-center"><WatchlistBtn active={watchlist.has(p.name)} onClick={() => toggleWatchlist(p.name)} /></td>
                 <td className="px-3 py-2 text-sm font-semibold text-white">{p.name}</td>
                 <td className="px-3 py-2 text-sm">{p.position}</td>
                 <td className="px-3 py-2 text-sm text-right">{p.height}</td>
