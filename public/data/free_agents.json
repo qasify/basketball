@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "generated": "2026-03-30",
+    "sources": [
+      "Eurobasket.com Available Players (verified March 29, 2026)",
+      "RealGM International Transactions (2025-26 season)"
+    ],
+    "total_free_agents": 115,
+    "tiers": { "tier1_euroleague": 6, "tier2_bcl_eurocup": 64, "tier3_domestic": 45 },
+    "stats_source": "RealGM Teams Table via HoopRoster scraper (Nov 2025)",
+    "stats_matched": 21
+  },
+  "free_agents": {
+    "tier1": [
+      { "name": "Andrija Milosavljevic", "nationality": "Serbia", "height": 196, "position": "G", "born": 2004, "last_team": "Partizan", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null },
+      { "name": "Pape Sy", "nationality": "France-Senegal", "height": 198, "position": "F", "born": 2002, "last_team": "Monaco", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null },
+      { "name": "Arturs Silins", "nationality": "Latvia", "height": 206, "position": "F", "born": 1999, "last_team": "Bayern", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null },
+      { "name": "Elijah Burns", "nationality": "USA", "height": 206, "position": "PF", "born": 1998, "last_team": "Bayern", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null },
+      { "name": "Andrija Ilicevic", "nationality": "Serbia", "height": 211, "position": "C", "born": 1997, "last_team": "Partizan", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null },
+      { "name": "Justin Thompson", "nationality": "USA", "height": 208, "position": "F", "born": 1995, "last_team": "Bayern", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 1, "stats": null }
+    ],
+    "tier2": [
+      { "name": "Richard Balint", "nationality": "Czech Republic", "height": 192, "position": "PG", "born": 2002, "last_team": "Bamberg", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 2, "stats": { "league": "German BBL", "team": "BRO", "gp": "7", "mpg": "20.1", "pts": "9.0", "fgp": ".522", "tpp": ".483", "ftp": ".333", "rpg": "2.0", "apg": "2.4", "spg": "1.4", "bpg": "0.1", "tov": "0.9" } },
+      { "name": "Andrea Codeluppi", "nationality": "Italy", "height": 200, "position": "PF", "born": 2003, "last_team": "Reggio Emilia", "end_year": 2025, "source": "eb_prev_season", "confidence": "HIGH", "confidence_reason": "Contract ended 2025", "tier": 2, "stats": null },
+      { "name": "Mertcan Gerhardt", "nationality": "Turkey-Germany", "height": 205, "position": "F/C", "born": 2002, "last_team": "Braunschweig", "end_year": 2025, "source": "eb_prev_season", "confidence": "HIGH", "confidence_reason": "Contract ended 2025", "tier": 2, "stats": null },
+      { "name": "Billy Srichanvit", "nationality": "Thailand-USA", "height": 196, "position": "G/F", "born": 2000, "last_team": "Legia", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 2, "stats": null },
+      { "name": "Angelo Allegri", "nationality": "USA", "height": 201, "position": "F", "born": 1999, "last_team": "Bonn", "end_year": 2025, "source": "eb_prev_season", "confidence": "HIGH", "confidence_reason": "Contract ended 2025", "tier": 2, "stats": null },
+      { "name": "Ben Onu", "nationality": "USA-Nigeria", "height": 206, "position": "F", "born": 1999, "last_team": "Hapoel B.S.", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 2, "stats": null },
+      { "name": "Branden Dawson", "nationality": "USA", "height": 198, "position": "SF", "born": 1993, "last_team": "Tofas", "end_year": 2025, "source": "eb_prev_season", "confidence": "HIGH", "confidence_reason": "Contract ended 2025", "tier": 2, "stats": { "league": "Turkish BSL", "team": "TOF", "gp": "30", "mpg": "24.6", "pts": "10.2", "fgp": ".509", "tpp": ".375", "ftp": ".750", "rpg": "4.8", "apg": "1.3", "spg": "1.0", "bpg": "0.3", "tov": "1.2" } },
+      { "name": "Davin Polprasid", "nationality": "Thailand-USA", "height": 201, "position": "F", "born": 2001, "last_team": "Ionikos Nikaias", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 2, "stats": null }
+    ],
+    "tier3": [
+      { "name": "Berkan Durmaz", "nationality": "Turkey", "height": 198, "position": "G/F", "born": 2003, "last_team": "Galatasaray", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 3, "stats": null },
+      { "name": "Guillaume Payen Boucard", "nationality": "France", "height": 191, "position": "PG", "born": 2002, "last_team": "Saint-Quentin", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 3, "stats": null },
+      { "name": "Luca Batt", "nationality": "Italy", "height": 195, "position": "G", "born": 2001, "last_team": "Napoli", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 3, "stats": null },
+      { "name": "Sasha Vezenkov", "nationality": "Bulgaria", "height": 206, "position": "PF", "born": 1995, "last_team": "Olympiacos", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 3, "stats": { "league": "Greek A1", "team": "OLY", "gp": "24", "mpg": "28.3", "pts": "15.7", "fgp": ".487", "tpp": ".395", "ftp": ".843", "rpg": "6.2", "apg": "1.8", "spg": "0.8", "bpg": "0.2", "tov": "1.5" } },
+      { "name": "Thomas Heurtel", "nationality": "France", "height": 188, "position": "PG", "born": 1989, "last_team": "Real Madrid", "source": "eurobasket_verified", "confidence": "MEDIUM", "confidence_reason": "Listed on Eurobasket Available", "tier": 3, "stats": null }
+    ]
+  },
+  "team_openings": [
+    { "team": "JL Bourg", "league": "BCL", "country": "France", "needs": ["PG", "SF"], "budget_tier": "mid", "source": "RealGM/Eurobasket intel" },
+    { "team": "Lietkabelis", "league": "BCL", "country": "Lithuania", "needs": ["C", "PF"], "budget_tier": "low-mid", "source": "RealGM/Eurobasket intel" },
+    { "team": "Hapoel Jerusalem", "league": "BCL", "country": "Israel", "needs": ["SG", "PF"], "budget_tier": "mid", "source": "RealGM/Eurobasket intel" },
+    { "team": "Turk Telekom", "league": "EuroCup", "country": "Turkey", "needs": ["PG"], "budget_tier": "mid-high", "source": "RealGM/Eurobasket intel" },
+    { "team": "Ulm", "league": "EuroCup", "country": "Germany", "needs": ["SF", "C"], "budget_tier": "mid", "source": "RealGM/Eurobasket intel" },
+    { "team": "Cedevita Ol.", "league": "EuroCup", "country": "Croatia", "needs": ["PG", "PF"], "budget_tier": "mid", "source": "RealGM/Eurobasket intel" }
+  ]
+}
