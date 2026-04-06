@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { FreeAgent, TeamOpening, FreeAgentData } from "../_types";
 import { formatStat, formatPct } from "../_utils";
 
@@ -105,7 +105,17 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
   const [sortCol, setSortCol] = useState("tier");
   const [sortDir, setSortDir] = useState(1);
   const [openingsSearch, setOpeningsSearch] = useState("");
-  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+  const [watchlist, setWatchlist] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const saved = localStorage.getItem("hr_watchlist");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("hr_watchlist", JSON.stringify([...watchlist])); } catch {}
+  }, [watchlist]);
 
   const handleSort = (col: string) => {
     if (sortCol === col) setSortDir((d) => d * -1);
