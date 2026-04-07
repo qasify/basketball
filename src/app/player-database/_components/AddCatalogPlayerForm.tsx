@@ -203,7 +203,7 @@ export default function AddCatalogPlayerForm() {
           <SectionCard
             className={cardClass}
             title="RealGM ID"
-            subtitle="Optional — match Excel import."
+            subtitle="Use the ID from the RealGM player URL when you care about Excel import."
             icon={<Hash className="h-4 w-4" strokeWidth={2} aria-hidden />}
           >
             <div>
@@ -217,7 +217,9 @@ export default function AddCatalogPlayerForm() {
                 className={fieldClass}
               />
               <p className="mt-1.5 text-[11px] leading-snug text-textGrey">
-                Add later in Edit if unknown.
+                Without this ID, rows from Excel that are keyed by RealGM won’t
+                merge with this manual player. Add the same number as in your
+                sheet, or set it later in Edit.
               </p>
             </div>
           </SectionCard>
