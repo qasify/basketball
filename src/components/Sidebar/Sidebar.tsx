@@ -18,8 +18,18 @@ const Sidebar = () => {
 
   return (
     <div className="flex flex-col w-[272px] h-[100vh] border-r-[1px] border-borderLight">
-      <div className="text-xl font-normal tracking-normal border-b-[1px] border-borderLight text-white uppercase p-1 h-[80px] flex items-center justify-center">
-        {appConstants?.appName}
+      <div className="border-b-[1px] border-borderLight p-1 h-[80px] flex items-center justify-center">
+        <div
+          className="flex items-center gap-2.5 px-2"
+          aria-label={appConstants?.appName}
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white font-bold text-lg leading-none shadow-sm">
+            H
+          </div>
+          <span className="text-white font-bold text-lg tracking-tight uppercase">
+            {appConstants?.appName}
+          </span>
+        </div>
       </div>
 
       {/* content of sidebar */}

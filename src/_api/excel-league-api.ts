@@ -2,116 +2,103 @@
 
 import fs from "fs";
 import path from "path";
-import type { League as ApiLeague, Team as ApiTeam, Player as ApiPlayer, PlayerSeason } from "./basketball-api";
+import type {
+  League as ApiLeague,
+  Team as ApiTeam,
+  Player as ApiPlayer,
+  PlayerSeason,
+} from "./basketball-api";
+import type { CatalogPlayerRow, CatalogTeamRow } from "@/types/excel-catalog-rows";
+import {
+  getLeaguesFromFirestore,
+  getTeamsFromFirestore,
+  getPlayerRowsByTeamIdsFromFirestore,
+  getPlayerRowsForIdFromFirestore,
+} from "@/server/catalog-firestore-queries";
 
-// Re-export core types so existing components can keep using `League`, `Team`, `Player`
 export type League = ApiLeague;
 export type Team = ApiTeam;
 export type Player = ApiPlayer;
 
-type InternalTeam = ApiTeam & {
-  leagueId: number;
-};
-
-type InternalPlayer = ApiPlayer & {
-  leagueId: number;
-  teamId: number;
-  season?: string;
-  realgmId?: number; // from Player ID Link, e.g. 121851
-  // Context for this specific season row
-  seasonAge?: number;
-  mainSearchedLeague?: string;
-  // Statistical properties from Excel data
-  gamesPlayed?: number;
-  gamesStarted?: number;
-  minutesPerGame?: number;
-  pointsPerGame?: number;
-  reboundsPerGame?: number;
-  assistsPerGame?: number;
-  stealsPerGame?: number;
-  blocksPerGame?: number;
-  turnoversPerGame?: number;
-  personalFouls?: number;
-
-  // Box-score shooting / rebounding (per game where applicable)
-  fgm?: number;
-  fga?: number;
-  fgPercent?: number;
-  threePm?: number;
-  threePa?: number;
-  threePPercent?: number;
-  ftm?: number;
-  fta?: number;
-  ftPercent?: number;
-  offReb?: number;
-  defReb?: number;
-
-  // Advanced percentages / ratings
-  tsPercent?: number;
-  efgPercent?: number;
-  orbPercent?: number;
-  drbPercent?: number;
-  trbPercent?: number;
-  astPercent?: number;
-  tovPercent?: number;
-  stlPercent?: number;
-  blkPercent?: number;
-  usgPercent?: number;
-  offensiveRating?: number;
-  defensiveRating?: number;
-  playerEfficiencyRating?: number;
-};
-
 let leaguesCache: League[] | null = null;
-let teamsCache: InternalTeam[] | null = null;
-let playersCache: InternalPlayer[] | null = null;
+let teamsCache: CatalogTeamRow[] | null = null;
+let playersCache: CatalogPlayerRow[] | null = null;
 
-const ensureLoaded = async () => {
+const useFirestoreCatalog = () =>
+  process.env.USE_FIRESTORE_CATALOG === "true" ||
+  process.env.USE_FIRESTORE_CATALOG === "1";
+
+function loadCatalogFromJsonFilesSync(): void {
+  const dataDir = path.join(process.cwd(), "public", "data");
+
+  const leaguesPath = path.join(dataDir, "leagues.json");
+  const teamsPath = path.join(dataDir, "teams.json");
+  const playersPath = path.join(dataDir, "players.json");
+
+  const leaguesData = fs.readFileSync(leaguesPath, "utf-8");
+  const teamsData = fs.readFileSync(teamsPath, "utf-8");
+  const playersData = fs.readFileSync(playersPath, "utf-8");
+
+  leaguesCache = JSON.parse(leaguesData);
+  teamsCache = JSON.parse(teamsData);
+  playersCache = JSON.parse(playersData);
+}
+
+/** Load full JSON into memory (JSON catalog mode only). */
+function ensureJsonLoaded(): void {
   if (leaguesCache && teamsCache && playersCache) return;
+  loadCatalogFromJsonFilesSync();
+}
 
-  try {
-    // Load pre-processed JSON data from file system
-    const dataDir = path.join(process.cwd(), 'public', 'data');
-
-    const leaguesPath = path.join(dataDir, 'leagues.json');
-    const teamsPath = path.join(dataDir, 'teams.json');
-    const playersPath = path.join(dataDir, 'players.json');
-
-    const leaguesData = fs.readFileSync(leaguesPath, 'utf-8');
-    const teamsData = fs.readFileSync(teamsPath, 'utf-8');
-    const playersData = fs.readFileSync(playersPath, 'utf-8');
-
-    leaguesCache = JSON.parse(leaguesData);
-    teamsCache = JSON.parse(teamsData);
-    playersCache = JSON.parse(playersData);
-  } catch (error) {
-    console.error('Error loading pre-processed data:', error);
-    throw error;
-  }
-};
+function leagueNameMapFromCache(): Map<number, string> {
+  return new Map((leaguesCache ?? []).map((l) => [l.id, l.name] as const));
+}
 
 const ALL_LEAGUES_ID = 0;
 
 export const getLeagues = async (): Promise<League[]> => {
-  await ensureLoaded();
+  if (useFirestoreCatalog()) {
+    const list = await getLeaguesFromFirestore();
+    const allLeagues: League = {
+      id: ALL_LEAGUES_ID,
+      name: "All Leagues",
+      type: "League",
+      logo: "",
+      country: { id: 0, name: "", code: "", flag: "" },
+      seasons: [],
+    };
+    return [allLeagues, ...list];
+  }
+
+  ensureJsonLoaded();
   const list = leaguesCache ?? [];
   const allLeagues: League = {
     id: ALL_LEAGUES_ID,
-    name: 'All Leagues',
-    type: 'League',
-    logo: '',
-    country: { id: 0, name: '', code: '', flag: '' },
+    name: "All Leagues",
+    type: "League",
+    logo: "",
+    country: { id: 0, name: "", code: "", flag: "" },
     seasons: [],
   };
   return [allLeagues, ...list];
 };
 
 export const getTeams = async (leagueId: number): Promise<Team[]> => {
-  await ensureLoaded();
+  if (useFirestoreCatalog()) {
+    const list = await getTeamsFromFirestore(leagueId);
+    return list.map((team) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { leagueId: _ignored, ...rest } = team;
+      return rest as Team;
+    });
+  }
+
+  ensureJsonLoaded();
   const list = teamsCache ?? [];
-  const filtered = leagueId === ALL_LEAGUES_ID
-    ? list
-    : list.filter((team) => team.leagueId === leagueId);
+  const filtered =
+    leagueId === ALL_LEAGUES_ID
+      ? list
+      : list.filter((team) => team.leagueId === leagueId);
   return filtered.map((team) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { leagueId: _ignored, ...rest } = team;
@@ -119,50 +106,62 @@ export const getTeams = async (leagueId: number): Promise<Team[]> => {
   });
 };
 
-function mergePlayerRows(rows: InternalPlayer[]): Player[] {
-  const playerMap = new Map<string, Player & { seasons: PlayerSeason[]; season?: string }>();
+function mergePlayerRows(
+  rows: CatalogPlayerRow[],
+  leagueIdToName: Map<number, string>
+): Player[] {
+  const playerMap = new Map<
+    string,
+    Player & { seasons: PlayerSeason[]; season?: string }
+  >();
 
   for (const player of rows) {
     const playerKey =
       player.realgmId != null
         ? `realgm-${player.realgmId}`
-        : `${player.name}-${player.country || 'unknown'}`;
+        : `${player.name}-${player.country || "unknown"}`;
 
     if (!playerMap.has(playerKey)) {
       const { leagueId: _l, teamId: _t, realgmId: _rg, ...rest } = player;
       playerMap.set(playerKey, {
         ...rest,
         id: player.realgmId ?? player.id,
+        realgmId: player.realgmId,
         seasons: [],
       });
     }
 
     const u = playerMap.get(playerKey)!;
+    if (player.realgmId != null && u.realgmId == null) {
+      u.realgmId = player.realgmId;
+    }
     if (player.position && !u.position) u.position = player.position;
     if (player.height && !u.height) u.height = player.height;
-    if (player.weight && (!u.weight || u.weight === '')) u.weight = player.weight;
+    if (player.weight && (!u.weight || u.weight === "")) u.weight = player.weight;
     if (player.number && !u.number) u.number = player.number;
     if (player.salary && !u.salary) u.salary = player.salary;
     if (player.contract && !u.contract) u.contract = player.contract;
     if (player.agency && !u.agency) u.agency = player.agency;
 
-    const currYear = player.season ? parseInt(String(player.season).split('-')[0], 10) || 0 : 0;
-    const existYear = u.season ? parseInt(String(u.season).split('-')[0], 10) || 0 : 0;
+    const currYear = player.season
+      ? parseInt(String(player.season).split("-")[0], 10) || 0
+      : 0;
+    const existYear = u.season
+      ? parseInt(String(u.season).split("-")[0], 10) || 0
+      : 0;
     if (currYear > existYear && player.age != null) {
       u.age = player.age;
       u.season = player.season;
     }
 
-    const league = leaguesCache?.find((l) => l.id === player.leagueId);
+    const league = leagueIdToName.get(player.leagueId);
     u.seasons!.push({
       id: player.id,
-      season: player.season || '',
-      team: player.team || '',
-      league: league?.name || '',
-       // Contextual
+      season: player.season || "",
+      team: player.team || "",
+      league: league ?? "",
       mainSearchedLeague: player.mainSearchedLeague,
       age: player.seasonAge ?? player.age,
-      // Box-score / per-game stats
       gamesPlayed: player.gamesPlayed,
       gamesStarted: player.gamesStarted,
       minutesPerGame: player.minutesPerGame,
@@ -204,11 +203,21 @@ function mergePlayerRows(rows: InternalPlayer[]): Player[] {
 }
 
 export const getPlayersByTeamIds = async (teamIds: number[]): Promise<Player[]> => {
-  await ensureLoaded();
   if (teamIds.length === 0) return [];
+
+  if (useFirestoreCatalog()) {
+    const [leagues, rows] = await Promise.all([
+      getLeaguesFromFirestore(),
+      getPlayerRowsByTeamIdsFromFirestore(teamIds),
+    ]);
+    const leagueIdToName = new Map(leagues.map((l) => [l.id, l.name] as const));
+    return mergePlayerRows(rows, leagueIdToName);
+  }
+
+  ensureJsonLoaded();
   const set = new Set(teamIds);
   const rows = (playersCache ?? []).filter((p) => set.has(p.teamId));
-  return mergePlayerRows(rows);
+  return mergePlayerRows(rows, leagueNameMapFromCache());
 };
 
 export const getPlayers = async (
@@ -220,7 +229,19 @@ export const getPlayers = async (
 };
 
 export const getPlayerById = async (id: number): Promise<Player> => {
-  await ensureLoaded();
+  if (useFirestoreCatalog()) {
+    const [leagues, rows] = await Promise.all([
+      getLeaguesFromFirestore(),
+      getPlayerRowsForIdFromFirestore(id),
+    ]);
+    const leagueIdToName = new Map(leagues.map((l) => [l.id, l.name] as const));
+    const merged = mergePlayerRows(rows, leagueIdToName);
+    if (merged.length === 0) throw new Error(`Player with ID ${id} not found`);
+    merged[0].id = id;
+    return merged[0];
+  }
+
+  ensureJsonLoaded();
   const row = (playersCache ?? []).find(
     (p) => p.realgmId === id || p.id === id
   );
@@ -231,12 +252,10 @@ export const getPlayerById = async (id: number): Promise<Player> => {
       : (playersCache ?? []).filter(
           (p) =>
             p.name === row.name &&
-            (p.country || 'unknown') === (row.country || 'unknown')
+            (p.country || "unknown") === (row.country || "unknown")
         );
-  const merged = mergePlayerRows(rows);
+  const merged = mergePlayerRows(rows, leagueNameMapFromCache());
   if (merged.length === 0) throw new Error(`Player with ID ${id} not found`);
   merged[0].id = id;
   return merged[0];
 };
-
-

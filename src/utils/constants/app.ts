@@ -1,5 +1,5 @@
 export const appConstants: Record<string, string> = {
-  appName: "Basketball Manager",
+  appName: "HOOPROSTER",
   defaultTitle: "Dashboard",
   dashboard: "Dashboard",
   // "team-management": "Team Management",

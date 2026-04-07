@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import Input from "@/components/Input";
 import { IoIosSearch } from "react-icons/io";
 import { Option } from "@/types/Select";
@@ -159,17 +161,105 @@ function hasAnyStatFilterSet(f: Filters): boolean {
   return false;
 }
 
-const PlayerDatabaseContent = () => {
+/** Unique country names for filter: split "A / B" into separate options, sorted alphabetically. */
+function extractUniqueCountries(list: Player[]): string[] {
+  const set = new Set<string>();
+  list.forEach((player) => {
+    parseCountryToArray(player.country).forEach((c) => set.add(c));
+  });
+  return Array.from(set).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" })
+  );
+}
+
+const PAGE_SIZE = 50;
+
+type PlayerDatabaseContentProps = {
+  /** Server: `USE_FIRESTORE_CATALOG` — enables catalog CRUD for admins */
+  catalogCrudEnabled?: boolean;
+};
+
+const PlayerDatabaseContent = ({
+  catalogCrudEnabled = false,
+}: PlayerDatabaseContentProps) => {
+  const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const showCatalogCrud = catalogCrudEnabled && role === "admin";
+
   const [searchValue, setSearchValue] = useState("");
   const [filters, setFilters] = useState<Filters>(initialFilters);
-
-  const [leagues, setLeagues] = useState<League[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [page, setPage] = useState(1);
   const [countries, setCountries] = useState<string[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: leagues = [], isPending: leaguesPending, error: leaguesError } =
+    useQuery<League[]>({
+      queryKey: ["catalog", "leagues"],
+      queryFn: getLeagues,
+    });
+
+  const leagueSelectionKey = useMemo(
+    () => filters.leagues.map((o) => o.value).sort().join(","),
+    [filters.leagues]
+  );
+
+  const teamsQueryEnabled = leagues.length > 0 && filters.leagues.length > 0;
+
+  const {
+    data: teams = [],
+    isPending: teamsPending,
+    error: teamsError,
+  } = useQuery<Team[]>({
+    queryKey: ["catalog", "teams", leagueSelectionKey],
+    queryFn: async () => {
+      const hasAllLeagues = filters.leagues.some((o) => o.value === "0");
+      const toFetch = hasAllLeagues
+        ? [filters.leagues.find((o) => o.value === "0")!]
+        : filters.leagues;
+      const teamsPromises = toFetch.map((o) =>
+        getTeams(parseInt(o.value, 10))
+      );
+      const teamsResults = await Promise.all(teamsPromises);
+      return teamsResults.flat();
+    },
+    enabled: teamsQueryEnabled,
+  });
+
+  const { teamIds, teamIdsKey } = useMemo(() => {
+    if (!filters.teams.length || !teams.length) {
+      return { teamIds: [] as number[], teamIdsKey: "" };
+    }
+    const useAllTeams = filters.teams.some((o) => o.value === "ALL");
+    const ids = useAllTeams
+      ? teams.map((t) => t.id)
+      : filters.teams
+          .filter((o) => o.value !== "ALL")
+          .map((o) => parseInt(o.value, 10));
+    const sorted = [...ids].sort((a, b) => a - b);
+    return { teamIds: sorted, teamIdsKey: sorted.join(",") };
+  }, [filters.teams, teams]);
+
+  const {
+    data: players = [],
+    isPending: playersPending,
+    error: playersError,
+  } = useQuery<Player[]>({
+    queryKey: ["catalog", "players", teamIdsKey],
+    queryFn: async () => {
+      const list = await getPlayersByTeamIds(teamIds);
+      return list.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    enabled: Boolean(teamIdsKey),
+  });
+
+  const catalogError =
+    leaguesError ?? teamsError ?? playersError
+      ? "Failed to load catalog. Try again."
+      : null;
+
+  const isLoading =
+    leaguesPending ||
+    (teamsQueryEnabled && teamsPending) ||
+    (Boolean(teamIdsKey) && playersPending);
 
   const filteredPlayers = useMemo(() => {
     return players.filter((player) => {
@@ -333,10 +423,6 @@ const PlayerDatabaseContent = () => {
   //   setFilters(initialFilters);
   // };
 
-  useEffect(() => {
-    fetchLeagues();
-  }, []);
-
   // Set "All Leagues" as default selection when leagues are loaded
   useEffect(() => {
     if (leagues.length > 0 && filters.leagues.length === 0) {
@@ -344,113 +430,65 @@ const PlayerDatabaseContent = () => {
         (league) => league.name.toLowerCase() === "all leagues"
       );
       if (allLeaguesOption) {
-        handleFilterChange("leagues", [
-          { label: allLeaguesOption.name, value: allLeaguesOption.id.toString() },
-        ]);
+        setFilters((prev) => ({
+          ...prev,
+          leagues: [
+            {
+              label: allLeaguesOption.name,
+              value: allLeaguesOption.id.toString(),
+            },
+          ],
+        }));
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leagues]);
+  }, [leagues, filters.leagues.length]);
+
+  // Reset team filter when league selection changes (avoids stale team ids)
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, teams: [] }));
+  }, [leagueSelectionKey]);
+
+  // Default team selection once teams load for the current league(s)
+  useEffect(() => {
+    if (filters.leagues.length === 0 || teams.length === 0) return;
+    if (filters.teams.length > 0) return;
+    const hasAllLeagues = filters.leagues.some((o) => o.value === "0");
+    const useAllTeams = teams.length > 50 || hasAllLeagues;
+    setFilters((prev) => ({
+      ...prev,
+      teams: useAllTeams
+        ? [{ label: "All Teams", value: "ALL" }]
+        : [{ label: teams[0].name, value: teams[0].id.toString() }],
+    }));
+  }, [filters.leagues, filters.teams.length, teams]);
 
   useEffect(() => {
-    if (filters.leagues.length > 0 && leagues.length > 0) {
-      fetchTeamsForSelectedLeagues();
-    } else {
-      setTeams([]);
-      setPlayers([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leagues, filters.leagues]);
-
-  useEffect(() => {
-    if (filters.teams.length > 0) {
-      fetchPlayersForSelectedTeams();
-    } else {
-      setPlayers([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.teams]);
-
-  useEffect(() => {
-    if (players && players.length > 0) {
+    if (players.length > 0) {
       setCountries(extractUniqueCountries(players));
     }
   }, [players]);
 
-  const fetchTeamsForSelectedLeagues = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // If "All Leagues" (id 0) is selected, only fetch all teams to avoid duplicates
-      const hasAllLeagues = filters.leagues.some((o) => o.value === "0");
-      const toFetch = hasAllLeagues
-        ? [filters.leagues.find((o) => o.value === "0")!]
-        : filters.leagues;
-      const teamsPromises = toFetch.map((o) => getTeams(parseInt(o.value)));
-      const teamsResults = await Promise.all(teamsPromises);
-      const allTeams = teamsResults.flat();
-      if (allTeams.length > 0) {
-        setTeams(allTeams);
-        const useAllTeams =
-          allTeams.length > 50 || hasAllLeagues;
-        handleFilterChange("teams", useAllTeams
-          ? [{ label: "All Teams", value: "ALL" }]
-          : [{ label: allTeams[0].name, value: allTeams[0].id.toString() }]);
-      }
-    } catch (err) {
-      setError("Failed to fetch teams");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPlayers.length / PAGE_SIZE)
+  );
 
-  const fetchPlayersForSelectedTeams = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const useAllTeams = filters.teams.some((o) => o.value === "ALL");
-      const teamIds = useAllTeams
-        ? teams.map((t) => t.id)
-        : filters.teams
-            .filter((o) => o.value !== "ALL")
-            .map((o) => parseInt(o.value, 10));
-      if (teamIds.length === 0) {
-        setPlayers([]);
-        return;
-      }
-      const allPlayers = await getPlayersByTeamIds(teamIds);
-      setPlayers(allPlayers.sort((a, b) => a.name.localeCompare(b.name)));
-    } catch (err) {
-      setError("Failed to fetch players");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    setPage(1);
+  }, [teamIdsKey, searchValue]);
 
-  const fetchLeagues = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getLeagues();
-      setLeagues(data);
-    } catch (err) {
-      setError("Failed to fetch leagues");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
-  /** Unique country names for filter: split "A / B" into separate options, sorted alphabetically. */
-  const extractUniqueCountries = (players: Player[]): string[] => {
-    const set = new Set<string>();
-    players.forEach((player) => {
-      parseCountryToArray(player.country).forEach((c) => set.add(c));
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  };
+  const tablePlayers = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredPlayers.slice(start, start + PAGE_SIZE);
+  }, [filteredPlayers, page]);
+
+  const pageStart =
+    filteredPlayers.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const pageEnd = Math.min(page * PAGE_SIZE, filteredPlayers.length);
 
   return (
     <div>
@@ -741,15 +779,62 @@ const PlayerDatabaseContent = () => {
       </div> */}
       {filteredPlayers.length > 0 && (
         <h2 className="text-md w-full text-right">
-          Players Count: <b>{filteredPlayers.length}</b>
+          Showing{" "}
+          <b>
+            {pageStart}–{pageEnd}
+          </b>{" "}
+          of <b>{filteredPlayers.length}</b> players
+          {totalPages > 1 && (
+            <span className="text-white/70">
+              {" "}
+              (page {page} of {totalPages})
+            </span>
+          )}
         </h2>
       )}
 
-      {error && (
-        <div className="bg-red-50 text-red-500 p-4 rounded">{error}</div>
+      {catalogError && (
+        <div className="bg-red-50 text-red-500 p-4 rounded">
+          {catalogError}
+        </div>
       )}
 
-      <PlayersTable players={filteredPlayers} />
+      <PlayersTable
+        players={tablePlayers}
+        catalogCrud={
+          showCatalogCrud
+            ? {
+                enabled: true,
+                onInvalidate: () =>
+                  queryClient.invalidateQueries({ queryKey: ["catalog"] }),
+              }
+            : undefined
+        }
+      />
+
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="px-4 py-2 rounded border border-white/50 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-white/80">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 rounded border border-white/50 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex justify-center">

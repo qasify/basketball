@@ -21,6 +21,7 @@ const inter = Inter({
 });
 
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { QueryProvider } from "@/components/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -41,7 +42,7 @@ export default function RootLayout({
             {children}
           </div>
         ) : (
-          <>
+          <QueryProvider>
             <Sidebar />
             <div className="flex flex-col h-[100vh] overflow-auto flex-1">
               <Header />
@@ -49,7 +50,7 @@ export default function RootLayout({
                 {children}
               </ProtectedRoute>
             </div>
-          </>
+          </QueryProvider>
         )}
       </body>
     </html>
