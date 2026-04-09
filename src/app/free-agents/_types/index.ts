@@ -30,8 +30,6 @@ export interface FreeAgent {
   nationality: string;
   lastTeam: string;
   confidence: "HIGH" | "MEDIUM";
-  tier: 1 | 2 | 3;
-  tierLabel: string;
   source: string;
   stats: PlayerStats | null;
 }
@@ -49,11 +47,6 @@ export interface FreeAgentData {
   metadata: {
     generated: string;
     totalFreeAgents: number;
-    tiers: {
-      tier1: number;
-      tier2: number;
-      tier3: number;
-    };
     statsMatched: number;
     statsSource: string;
   };
