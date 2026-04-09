@@ -2,14 +2,11 @@
 
 import type { FreeAgent, TeamOpening, FreeAgentData } from "../_types";
 
+// Parse the raw JSON from scraper output into typed data
 export function parseFreeAgentData(raw: any): FreeAgentData {
   const freeAgents: FreeAgent[] = [];
 
-  for (const [tierKey, tierNum, tierLabel] of [
-    ["tier1", 1, "EuroLeague"],
-    ["tier2", 2, "BCL/EuroCup"],
-    ["tier3", 3, "Domestic"],
-  ] as const) {
+  for (const tierKey of ["tier1", "tier2", "tier3"]) {
     const players = raw.free_agents?.[tierKey] || [];
     for (const p of players) {
       const team = p.last_team || p.eb_team || "";
@@ -45,8 +42,6 @@ export function parseFreeAgentData(raw: any): FreeAgentData {
         nationality: p.nationality,
         lastTeam: team.replace(/\s*\(.*?\)/, "").trim(),
         confidence: p.confidence,
-        tier: tierNum,
-        tierLabel: tierLabel,
         source: p.source || "",
         stats,
       });
@@ -67,12 +62,7 @@ export function parseFreeAgentData(raw: any): FreeAgentData {
   return {
     metadata: {
       generated: raw.metadata?.generated || "",
-      totalFreeAgents: raw.metadata?.total_free_agents || freeAgents.length,
-      tiers: {
-        tier1: raw.metadata?.tiers?.tier1_euroleague || 0,
-        tier2: raw.metadata?.tiers?.tier2_bcl_eurocup || 0,
-        tier3: raw.metadata?.tiers?.tier3_domestic || 0,
-      },
+      totalFreeAgents: freeAgents.length,
       statsMatched: raw.metadata?.stats_matched || 0,
       statsSource: raw.metadata?.stats_source || "",
     },
@@ -91,6 +81,7 @@ function fixName(name: string): string {
   return n;
 }
 
+// Format stat for display
 export function formatStat(val: number | null, decimals = 1): string {
   if (val === null || val === undefined || isNaN(val)) return "-";
   return val.toFixed(decimals);
