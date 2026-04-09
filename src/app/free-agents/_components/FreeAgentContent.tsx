@@ -27,9 +27,6 @@ function Badge({
   const styles: Record<string, string> = {
     high: "bg-emerald-950 text-emerald-400",
     medium: "bg-amber-950 text-amber-400",
-    t1: "bg-indigo-950 text-indigo-400",
-    t2: "bg-blue-950 text-blue-400",
-    t3: "bg-stone-900 text-stone-400",
   };
   return (
     <span
@@ -98,11 +95,10 @@ function WatchlistBtn({ active, onClick }: { active: boolean; onClick: () => voi
 export default function FreeAgentContent({ data, isAdmin = false }: { data: FreeAgentData; isAdmin?: boolean }) {
   const [tab, setTab] = useState<"fa" | "openings">("fa");
   const [search, setSearch] = useState("");
-  const [tierFilter, setTierFilter] = useState("");
   const [posFilter, setPosFilter] = useState("");
   const [confFilter, setConfFilter] = useState("");
   const [natFilter, setNatFilter] = useState("");
-  const [sortCol, setSortCol] = useState("tier");
+  const [sortCol, setSortCol] = useState("name");
   const [sortDir, setSortDir] = useState(1);
   const [openingsSearch, setOpeningsSearch] = useState("");
   const [watchlist, setWatchlist] = useState<Set<string>>(() => {
@@ -146,7 +142,6 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
         const q = search.toLowerCase();
         if (!p.name.toLowerCase().includes(q) && !p.lastTeam.toLowerCase().includes(q) && !p.nationality.toLowerCase().includes(q)) return false;
       }
-      if (tierFilter && p.tier !== Number(tierFilter)) return false;
       if (posFilter) {
         if (posFilter === "G" && !/G|PG|SG/.test(p.position)) return false;
         if (posFilter === "F" && !/F|SF|PF/.test(p.position)) return false;
@@ -174,7 +169,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
       return 0;
     });
     return result;
-  }, [data.freeAgents, search, tierFilter, posFilter, natFilter, confFilter, sortCol, sortDir, watchlist]);
+  }, [data.freeAgents, search, posFilter, natFilter, confFilter, sortCol, sortDir, watchlist]);
 
   const filteredOpenings = useMemo(() => {
     const q = openingsSearch.toLowerCase();
@@ -182,11 +177,11 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
   }, [data.teamOpenings, openingsSearch]);
 
   const exportCSV = () => {
-    const headers = ["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Tier","Watchlist"];
+    const headers = ["Name","Position","Height","Age","Nationality","Last Team","PPG","RPG","APG","FG%","3P%","Watchlist"];
     if (isAdmin) headers.push("Confidence");
     const rows = [headers];
     data.freeAgents.forEach((p) => {
-      const row = [p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), p.tierLabel, watchlist.has(p.name) ? "Yes" : ""];
+      const row = [p.name, p.position, String(p.height), String(p.age), p.nationality, p.lastTeam, formatStat(p.stats?.pts ?? null), formatStat(p.stats?.trb ?? null), formatStat(p.stats?.ast ?? null), formatPct(p.stats?.fgp ?? null), formatPct(p.stats?.tpp ?? null), watchlist.has(p.name) ? "Yes" : ""];
       if (isAdmin) row.push(p.confidence);
       rows.push(row);
     });
@@ -205,9 +200,6 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
       <div><p className="text-xs text-textLight mt-1">Season 2025-26 | Data as of {data.metadata.generated} | {data.metadata.totalFreeAgents} verified free agents{isAdmin && ` | ${data.teamOpenings.length} teams with open spots`}{isAdmin && data.metadata.statsMatched > 0 && ` | ${data.metadata.statsMatched} with stats`}</p></div>
       <div className="flex gap-4 flex-wrap">
         <KpiCard value={data.metadata.totalFreeAgents} label="Free Agents" />
-        <KpiCard value={data.metadata.tiers.tier1} label="EuroLeague" />
-        <KpiCard value={data.metadata.tiers.tier2} label="BCL/EuroCup" />
-        <KpiCard value={data.metadata.tiers.tier3} label="Domestic" />
         {isAdmin && <KpiCard value={data.teamOpenings.length} label="Openings" />}
         {watchlist.size > 0 && <KpiCard value={watchlist.size} label="Watchlist" />}
       </div>
@@ -218,7 +210,6 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
       {tab === "fa" && (<>
         <div className="flex gap-3 flex-wrap items-center">
           <input type="text" placeholder="Search by name, team, nationality..." className={`${inputClasses} w-60`} value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select className={inputClasses} value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}><option value="">All Tiers</option><option value="1">Tier 1 - EuroLeague</option><option value="2">Tier 2 - BCL/EuroCup</option><option value="3">Tier 3 - Domestic</option></select>
           <select className={inputClasses} value={posFilter} onChange={(e) => setPosFilter(e.target.value)}><option value="">All Positions</option><option value="G">Guards</option><option value="F">Forwards</option><option value="C">Centers</option></select>
           <select className={inputClasses} value={natFilter} onChange={(e) => setNatFilter(e.target.value)}><option value="">All Nationalities</option>{nationalities.map((n) => <option key={n} value={n}>{n}</option>)}</select>
           {isAdmin && <select className={inputClasses} value={confFilter} onChange={(e) => setConfFilter(e.target.value)}><option value="">All Confidence</option><option value="HIGH">HIGH only</option><option value="MEDIUM">MEDIUM only</option></select>}
@@ -240,7 +231,6 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
               <SortHeader label="APG" sortKey="ast" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               <SortHeader label="FG%" sortKey="fgp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               <SortHeader label="3P%" sortKey="tpp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
-              <SortHeader label="Tier" sortKey="tier" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />
               {isAdmin && <SortHeader label="Conf" sortKey="confidence" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />}
             </tr></thead>
             <tbody>
@@ -257,7 +247,6 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
                 <StatCell value={formatStat(p.stats?.ast ?? null)} hasData={!!p.stats} />
                 <StatCell value={formatPct(p.stats?.fgp ?? null)} hasData={!!p.stats} />
                 <StatCell value={formatPct(p.stats?.tpp ?? null)} hasData={!!p.stats} />
-                <td className="px-3 py-2"><Badge variant={`t${p.tier}`}>{p.tierLabel}</Badge></td>
                 {isAdmin && <td className="px-3 py-2"><Badge variant={p.confidence.toLowerCase()}>{p.confidence}</Badge></td>}
               </tr>))}
             </tbody>
