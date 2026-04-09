@@ -732,8 +732,18 @@
         "stats": null
       },
       {
-        "name": "GerUZ[[È\^P\]Y\È][Û[]H\Ù[[HZYÚNNKÜÚ][ÛÜNNM\ÝÝX[H\YÛÞHÛÝ\ÙH]\Ø\ÚÙ]Ý\YYYÛÛY[ÙHQQUSHÛÛY[ÙWÜX\ÛÛ\ÝYÛ]\Ø\ÚÙ]]Z[XH
-Ý\[ÙX\ÛÛX[HHX^HÝ[HXÝ]JHY\Ý]È[l
+        "name": "Geronimo Perez-Barquero",
+        "nationality": "Argentina",
+        "height": 199,
+        "position": "F",
+        "born": 1996,
+        "last_team": "Zaragoza",
+        "source": "eurobasket_verified",
+        "confidence": "MEDIUM",
+        "confidence_reason": "Listed on Eurobasket Available (current season team - may still be active)",
+        "tier": 2,
+        "stats": null
+      },
       {
         "name": "Goran Filipovic",
         "nationality": "Croatia",
@@ -858,7 +868,7 @@
         "stats": null
       },
       {
-        "name": "Kenny Etou",
+        "name": "Knny Etou",
         "nationality": "Congo-Brazil",
         "height": 202,
         "position": "PF",
@@ -884,7 +894,7 @@
         "stats": null
       },
       {
-        "name": "Sasu Salin",
+        "name": "Sausu Salin",
         "nationality": "Finland",
         "height": 192,
         "position": "G",
