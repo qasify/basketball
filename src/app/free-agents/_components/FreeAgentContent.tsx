@@ -91,6 +91,134 @@ function WatchlistBtn({ active, onClick }: { active: boolean; onClick: () => voi
   );
 }
 
+// ---- Add Player Modal ----
+const EMPTY_PLAYER = {
+  name: "", position: "", height: "", born: "", nationality: "",
+  last_team: "", confidence: "HIGH", source: "manual",
+};
+const TIER_OPTIONS = [
+  { value: "tier1", label: "Tier 1 - EuroLeague" },
+  { value: "tier2", label: "Tier 2 - BCL/EuroCup" },
+  { value: "tier3", label: "Tier 3 - Domestic" },
+];
+
+function AddPlayerModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({ ...EMPTY_PLAYER });
+  const [tier, setTier] = useState("tier2");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.position.trim()) {
+      setError("Name and Position are required.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    const player = {
+      ...form,
+      height: form.height ? Number(form.height) : null,
+      born: form.born ? Number(form.born) : null,
+    };
+    const res = await fetch("/api/admin/players", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player, tier }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) { setError(data.error || "Failed"); return; }
+    onSaved();
+    onClose();
+  };
+
+  const inputCls = "bg-white/5 border border-borderLight text-white px-3 py-2 rounded-md text-sm focus:outline-none focus:border-blue-500 w-full";
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#111] border border-borderLight rounded-xl p-6 w-full max-w-lg">
+        <h2 className="text-white font-bold text-lg mb-4">Add Player</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Name *</label>
+            <input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Firstname Lastname" />
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Position *</label>
+            <input className={inputCls} value={form.position} onChange={(e) => set("position", e.target.value)} placeholder="PG, SG, SF, PF, C" />
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Height (cm)</label>
+            <input className={inputCls} type="number" value={form.height} onChange={(e) => set("height", e.target.value)} placeholder="195" />
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Birth Year</label>
+            <input className={inputCls} type="number" value={form.born} onChange={(e) => set("born", e.target.value)} placeholder="1998" />
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Nationality</label>
+            <input className={inputCls} value={form.nationality} onChange={(e) => set("nationality", e.target.value)} placeholder="LTU" />
+          </div>
+          <div className="col-span-2">
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Last Team</label>
+            <input className={inputCls} value={form.last_team} onChange={(e) => set("last_team", e.target.value)} placeholder="Club name" />
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Tier</label>
+            <select className={inputCls} value={tier} onChange={(e) => setTier(e.target.value)}>
+              {TIER_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-textLight uppercase mb-1 block">Confidence</label>
+            <select className={inputCls} value={form.confidence} onChange={(e) => set("confidence", e.target.value)}>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+            </select>
+          </div>
+        </div>
+        {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
+        <div className="flex gap-3 mt-5 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-textLight hover:text-white border border-borderLight rounded-md">Cancel</button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-600 text-white rounded-md font-semibold disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Player"}
+          </button>
+        </div>
+        <p className="text-[10px] text-textLight mt-3">Changes will be live for all users in ~1-2 minutes after Vercel deploys.</p>
+      </div>
+    </div>
+  );
+}
+
+// ---- Confirm Delete Modal ----
+function ConfirmDelete({ name, onCancel, onConfirm, deleting }: { name: string; onCancel: () => void; onConfirm: () => void; deleting: boolean }) {
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#111] border border-borderLight rounded-xl p-6 w-full max-w-sm text-center">
+        <p className="text-white text-sm mb-1">Remove player?</p>
+        <p className="text-blue-400 font-bold mb-4">{name}</p>
+        <p className="text-textLight text-xs mb-5">This will permanently delete the player for all users.</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-textLight hover:text-white border border-borderLight rounded-md">Cancel</button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white rounded-md font-semibold disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Main Component ----
 export default function FreeAgentContent({ data, isAdmin = false }: { data: FreeAgentData; isAdmin?: boolean }) {
   const [tab, setTab] = useState<"fa" | "openings">("fa");
@@ -109,16 +237,19 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
     } catch { return new Set(); }
   });
 
+  // Admin state
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [adminMsg, setAdminMsg] = useState("");
+
   useEffect(() => {
     try { localStorage.setItem("hr_watchlist", JSON.stringify([...watchlist])); } catch {}
   }, [watchlist]);
 
   const handleSort = (col: string) => {
     if (sortCol === col) setSortDir((d) => d * -1);
-    else {
-      setSortCol(col);
-      setSortDir(1);
-    }
+    else { setSortCol(col); setSortDir(1); }
   };
 
   const toggleWatchlist = useCallback((name: string) => {
@@ -130,7 +261,22 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
     });
   }, []);
 
-  // Extract unique nationalities for filter dropdown
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/players?name=${encodeURIComponent(deleteTarget)}`, { method: "DELETE" });
+    setDeleting(false);
+    setDeleteTarget(null);
+    if (res.ok) {
+      setAdminMsg(`${deleteTarget} deleted. Page will update in ~1-2 min.`);
+      setTimeout(() => setAdminMsg(""), 6000);
+    } else {
+      const d = await res.json();
+      setAdminMsg("Error: " + (d.error || "Unknown"));
+      setTimeout(() => setAdminMsg(""), 5000);
+    }
+  };
+
   const nationalities = useMemo(() => {
     const nats = new Set(data.freeAgents.map((p) => p.nationality));
     return Array.from(nats).sort();
@@ -197,16 +343,38 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Modals */}
+      {showAdd && <AddPlayerModal onClose={() => setShowAdd(false)} onSaved={() => { setAdminMsg("Player added. Page will update in ~1-2 min."); setTimeout(() => setAdminMsg(""), 6000); }} />}
+      {deleteTarget && <ConfirmDelete name={deleteTarget} onCancel={() => setDeleteTarget(null)} onConfirm={handleDelete} deleting={deleting} />}
+
+      {/* Admin notification bar */}
+      {adminMsg && (
+        <div className="bg-emerald-950 border border-emerald-700 text-emerald-300 text-sm px-4 py-2 rounded-lg">
+          {adminMsg}
+        </div>
+      )}
+
       <div><p className="text-xs text-textLight mt-1">Season 2025-26 | Data as of {data.metadata.generated} | {data.metadata.totalFreeAgents} verified free agents{isAdmin && ` | ${data.teamOpenings.length} teams with open spots`}{isAdmin && data.metadata.statsMatched > 0 && ` | ${data.metadata.statsMatched} with stats`}</p></div>
-      <div className="flex gap-4 flex-wrap">
+
+      <div className="flex gap-4 flex-wrap items-center">
         <KpiCard value={data.metadata.totalFreeAgents} label="Free Agents" />
         {isAdmin && <KpiCard value={data.teamOpenings.length} label="Openings" />}
         {watchlist.size > 0 && <KpiCard value={watchlist.size} label="Watchlist" />}
+        {isAdmin && (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="ml-auto bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors"
+          >
+            + Add Player
+          </button>
+        )}
       </div>
+
       <div className="flex border-b border-borderLight">
         <button className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === "fa" ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab("fa")}>Free Agents</button>
         {isAdmin && <button className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === "openings" ? "text-blue-500 border-blue-500" : "text-textLight border-transparent hover:text-white"}`} onClick={() => setTab("openings")}>Team Openings</button>}
       </div>
+
       {tab === "fa" && (<>
         <div className="flex gap-3 flex-wrap items-center">
           <input type="text" placeholder="Search by name, team, nationality..." className={`${inputClasses} w-60`} value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -232,6 +400,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
               <SortHeader label="FG%" sortKey="fgp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               <SortHeader label="3P%" sortKey="tpp" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} align="right" />
               {isAdmin && <SortHeader label="Conf" sortKey="confidence" currentSort={sortCol} currentDir={sortDir} onSort={handleSort} />}
+              {isAdmin && <th className="px-3 py-2.5 text-[10px] text-textLight uppercase border-b border-borderLight"></th>}
             </tr></thead>
             <tbody>
               {filteredPlayers.map((p, i) => (<tr key={i} className="hover:bg-white/5 border-b border-borderLight">
@@ -248,11 +417,23 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
                 <StatCell value={formatPct(p.stats?.fgp ?? null)} hasData={!!p.stats} />
                 <StatCell value={formatPct(p.stats?.tpp ?? null)} hasData={!!p.stats} />
                 {isAdmin && <td className="px-3 py-2"><Badge variant={p.confidence.toLowerCase()}>{p.confidence}</Badge></td>}
+                {isAdmin && (
+                  <td className="px-3 py-2 text-center">
+                    <button
+                      onClick={() => setDeleteTarget(p.name)}
+                      className="text-red-500/50 hover:text-red-400 text-xs transition-colors"
+                      title="Delete player"
+                    >
+                      ✕
+                    </button>
+                  </td>
+                )}
               </tr>))}
             </tbody>
           </table>
         </div>
       </>)}
+
       {tab === "openings" && isAdmin && (<>
         <div><input type="text" placeholder="Search teams or leagues..." className={`${inputClasses} w-60`} value={openingsSearch} onChange={(e) => setOpeningsSearch(e.target.value)} /></div>
         <p className="text-xs text-textLight">{filteredOpenings.length} teams with open roster spots</p>
@@ -279,6 +460,7 @@ export default function FreeAgentContent({ data, isAdmin = false }: { data: Free
           </table>
         </div>
       </>)}
+
       <div className="text-[11px] text-textLight pt-2">HoopRoster Transfer Intelligence | Sources: Eurobasket.com, RealGM</div>
     </div>
   );
