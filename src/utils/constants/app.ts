@@ -9,6 +9,7 @@ export const appConstants: Record<string, string> = {
   notifications: "Notifications",
   news: "News",
   settings: "Settings",
+  profile: "My Profile",
   support: "Support",
   "player-profile": "Player Profile",
 };

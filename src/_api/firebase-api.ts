@@ -6,11 +6,13 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   updateDoc,
   where,
 } from "firebase/firestore";
+import { logActivity } from "./activity-api";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -30,11 +32,40 @@ export const usersDB = {
     }
     return "user";
   },
+  getProfile: async (uid: string) => {
+    const q = query(collection(db, "users"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length > 0) {
+      return querySnapshot.docs[0].data() as {
+        uid: string;
+        email: string;
+        role: "admin" | "user";
+        displayName?: string;
+        createdAt?: string;
+      };
+    }
+    return null;
+  },
+  updateDisplayName: async (uid: string, displayName: string) => {
+    const q = query(collection(db, "users"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.docs.length > 0) {
+      const docRef = doc(db, "users", querySnapshot.docs[0].id);
+      await updateDoc(docRef, { displayName });
+    }
+    // Also update Firebase Auth profile
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const { updateProfile } = await import("firebase/auth");
+      await updateProfile(currentUser, { displayName });
+    }
+  },
   createUser: async (uid: string, email: string) => {
     await addDoc(collection(db, "users"), {
       uid,
       email,
-      role: "user"
+      role: "user",
+      createdAt: new Date().toISOString(),
     });
   }
 };
@@ -98,7 +129,15 @@ export const watchListDB = {
     if (querySnapshot.docs.length === 0) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { isInTeam, isInWatchlist, ...otherData } = player;
-      await addDoc(collection(db, WATCHLIST_COLLECTION), { ...otherData, userEmail });
+      await addDoc(collection(db, WATCHLIST_COLLECTION), {
+        ...otherData,
+        userEmail,
+      });
+      void logActivity({
+        actionType: "WATCHLIST_ADDED",
+        playerId: player.id,
+        playerName: player.name,
+      }).catch(() => {});
     }
   },
   getAll: async () => {
@@ -127,7 +166,16 @@ export const watchListDB = {
   },
   remove: async (documentId: string) => {
     const docRef = doc(db, WATCHLIST_COLLECTION, documentId);
+    const snap = await getDoc(docRef);
+    const data = snap.data() as { id?: number; name?: string } | undefined;
     await deleteDoc(docRef);
+    if (data?.id != null) {
+      void logActivity({
+        actionType: "WATCHLIST_REMOVED",
+        playerId: data.id,
+        playerName: typeof data.name === "string" ? data.name : undefined,
+      }).catch(() => {});
+    }
   },
   update: async (player: FBPlayer) => {
     const docRef = doc(db, WATCHLIST_COLLECTION, player.documentId);
@@ -245,10 +293,10 @@ export const teamRosterDB = {
 };
 
 export const notesDB = {
-  add: async (playerId: number, note: string) => {
+  /** @param playerName optional — used for activity feed */
+  add: async (playerId: number, note: string, playerName?: string) => {
     const userEmail = auth.currentUser?.email;
     if (!userEmail) return;
-
     const q = query(
       collection(db, NOTE_COLLECTION),
       where("id", "==", playerId)
@@ -268,6 +316,12 @@ export const notesDB = {
         note,
       });
     }
+    void logActivity({
+      actionType: "NOTE_SAVED",
+      playerId,
+      playerName,
+      description: "Saved a note",
+    }).catch(() => {});
   },
   get: async (playerId: number) => {
     const userEmail = auth.currentUser?.email;

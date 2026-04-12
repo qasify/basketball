@@ -59,14 +59,14 @@ const Banner: React.FC<BannerType> = (
         <div className="flex flex-wrap gap-3">
           <Link
             href="/watchlist"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white bg-purplish hover:bg-purpleFill border border-purpleFill/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purpleFill focus:ring-offset-2 focus:ring-offset-borderPurple"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white bg-purplish/60 hover:bg-purpleFill/90 border border-purpleFill/50 transition-colors focus:outline-none focus:ring-2 focus:ring-purpleFill focus:ring-offset-2 focus:ring-offset-borderPurple"
           >
             <List className="w-4 h-4" aria-hidden />
             View watchlist
           </Link>
           <Link
             href="/player-database"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white bg-headerBg/80 hover:bg-headerBg border-2 border-purpleFill transition-colors focus:outline-none focus:ring-2 focus:ring-purpleFill focus:ring-offset-2 focus:ring-offset-borderPurple"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white bg-headerBg/60 hover:bg-headerBg/90 border-2 border-purpleFill transition-colors focus:outline-none focus:ring-2 focus:ring-purpleFill focus:ring-offset-2 focus:ring-offset-borderPurple"
           >
             <Users className="w-4 h-4" aria-hidden />
             Go to player database
