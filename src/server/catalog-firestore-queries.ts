@@ -94,6 +94,45 @@ async function fetchPlayerRowsByTeamIdsUncached(
   return out;
 }
 
+/** One page of raw rows (cursor on numeric `id`). When teamIds exceed `in` limit, returns full set in one chunk (no cursor). */
+export async function getPlayerRowsPageByTeamIdsFromFirestore(
+  teamIds: number[],
+  rawLimit: number,
+  cursor: string | null
+): Promise<{ rows: CatalogPlayerRow[]; nextCursor: string | null }> {
+  const unique = [...new Set(teamIds)].sort((a, b) => a - b);
+  if (unique.length === 0) return { rows: [], nextCursor: null };
+
+  if (unique.length > FIRESTORE_IN_MAX) {
+    const all = await fetchPlayerRowsByTeamIdsUncached(unique);
+    return { rows: all, nextCursor: null };
+  }
+
+  const db = getDb();
+  const col = db.collection(CATALOG_PLAYER_ROWS);
+  const limitPlus = rawLimit + 1;
+  let q = col
+    .where("teamId", "in", unique)
+    .orderBy("id")
+    .limit(limitPlus);
+
+  if (cursor != null && cursor !== "") {
+    const n = parseInt(cursor, 10);
+    if (!Number.isNaN(n)) {
+      q = q.startAfter(n);
+    }
+  }
+
+  const snap = await q.get();
+  const allDocs = snap.docs.map((d) => docToPlayerRow(d));
+  const hasMore = allDocs.length > rawLimit;
+  const rows = hasMore ? allDocs.slice(0, rawLimit) : allDocs;
+  const nextCursor =
+    hasMore && rows.length > 0 ? String(rows[rows.length - 1].id) : null;
+
+  return { rows, nextCursor };
+}
+
 /** Matches excel-league-api getPlayerById merge logic using queries only. */
 async function fetchPlayerRowsForPlayerIdUncached(
   id: number

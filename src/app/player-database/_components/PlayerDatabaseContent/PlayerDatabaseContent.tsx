@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Input from "@/components/Input";
 import { IoIosSearch } from "react-icons/io";
@@ -16,15 +16,18 @@ import Slider from "@/components/Slider";
 // import { HiChevronDoubleDown } from "react-icons/hi2";
 // import Button from "@/components/Button";
 import PlayersTable from "../PlayersTable";
+import PlayersTableSkeleton from "../PlayersTable/PlayersTableSkeleton";
 import {
   getLeagues,
   getPlayersByTeamIds,
+  getPlayersPageByTeamIds,
   getTeams,
   type League,
   type Player,
   type Team,
 } from "@/_api/excel-league-api";
 import type { PlayerSeason } from "@/_api/basketball-api";
+import { combineMergedPlayerPages } from "@/utils/mergePlayerPageChunks";
 
 const MultiSelect = dynamic(() => import("@/components/Select/MultiSelect"), {
   ssr: false,
@@ -172,7 +175,11 @@ function extractUniqueCountries(list: Player[]): string[] {
   );
 }
 
-const PAGE_SIZE = 50;
+/** Rows per table page (Previous/Next and “Showing X–Y”). */
+const PAGE_SIZE = 10;
+
+/** Raw catalog row reads per Firestore request (merged “players” count is lower when seasons collapse). */
+const FIRESTORE_RAW_PAGE_SIZE = 120;
 
 type PlayerDatabaseContentProps = {
   /** Server: `USE_FIRESTORE_CATALOG` — enables catalog CRUD for admins */
@@ -182,6 +189,8 @@ type PlayerDatabaseContentProps = {
 const PlayerDatabaseContent = ({
   catalogCrudEnabled = false,
 }: PlayerDatabaseContentProps) => {
+  /** When true, player list uses Firestore cursor pagination (fewer reads per action). */
+  const useFirestorePaging = catalogCrudEnabled;
   const queryClient = useQueryClient();
   const { role } = useAuth();
   const showCatalogCrud = catalogCrudEnabled && role === "admin";
@@ -238,28 +247,64 @@ const PlayerDatabaseContent = ({
     return { teamIds: sorted, teamIdsKey: sorted.join(",") };
   }, [filters.teams, teams]);
 
-  const {
-    data: players = [],
-    isPending: playersPending,
-    error: playersError,
-  } = useQuery<Player[]>({
-    queryKey: ["catalog", "players", teamIdsKey],
+  const playersListQuery = useQuery<Player[]>({
+    queryKey: ["catalog", "players", "full", teamIdsKey],
     queryFn: async () => {
       const list = await getPlayersByTeamIds(teamIds);
       return list.sort((a, b) => a.name.localeCompare(b.name));
     },
-    enabled: Boolean(teamIdsKey),
+    enabled: Boolean(teamIdsKey) && !useFirestorePaging,
   });
+
+  const playersPagedQuery = useInfiniteQuery({
+    queryKey: [
+      "catalog",
+      "players",
+      "paged",
+      teamIdsKey,
+      FIRESTORE_RAW_PAGE_SIZE,
+    ],
+    queryFn: async ({ pageParam }) => {
+      return getPlayersPageByTeamIds(
+        teamIds,
+        FIRESTORE_RAW_PAGE_SIZE,
+        pageParam as string | null
+      );
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled: Boolean(teamIdsKey) && useFirestorePaging,
+  });
+
+  const players = useMemo(() => {
+    if (!teamIdsKey) return [];
+    if (useFirestorePaging) {
+      const pages = playersPagedQuery.data?.pages ?? [];
+      return combineMergedPlayerPages(pages.map((p) => p.players));
+    }
+    return playersListQuery.data ?? [];
+  }, [
+    teamIdsKey,
+    useFirestorePaging,
+    playersPagedQuery.data?.pages,
+    playersListQuery.data,
+  ]);
+
+  const playersError = useFirestorePaging
+    ? playersPagedQuery.error
+    : playersListQuery.error;
 
   const catalogError =
     leaguesError ?? teamsError ?? playersError
       ? "Failed to load catalog. Try again."
       : null;
 
-  const isLoading =
-    leaguesPending ||
-    (teamsQueryEnabled && teamsPending) ||
-    (Boolean(teamIdsKey) && playersPending);
+  const playersPending = useFirestorePaging
+    ? playersPagedQuery.isPending
+    : playersListQuery.isPending;
+
+  /** Table area: show skeleton while the player list query is in flight. */
+  const playersTableLoading = Boolean(teamIdsKey) && playersPending;
 
   const filteredPlayers = useMemo(() => {
     return players.filter((player) => {
@@ -799,20 +844,24 @@ const PlayerDatabaseContent = ({
         </div>
       )}
 
-      <PlayersTable
-        players={tablePlayers}
-        catalogCrud={
-          showCatalogCrud
-            ? {
-                enabled: true,
-                onInvalidate: () =>
-                  queryClient.invalidateQueries({ queryKey: ["catalog"] }),
-              }
-            : undefined
-        }
-      />
+      {playersTableLoading ? (
+        <PlayersTableSkeleton />
+      ) : (
+        <PlayersTable
+          players={tablePlayers}
+          catalogCrud={
+            showCatalogCrud
+              ? {
+                  enabled: true,
+                  onInvalidate: () =>
+                    queryClient.invalidateQueries({ queryKey: ["catalog"] }),
+                }
+              : undefined
+          }
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!playersTableLoading && totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
           <button
             type="button"
@@ -836,11 +885,19 @@ const PlayerDatabaseContent = ({
         </div>
       )}
 
-      {isLoading && (
-        <div className="flex justify-center">
-          <p>Loading...</p>
+      {useFirestorePaging && Boolean(teamIdsKey) && playersPagedQuery.hasNextPage && (
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            disabled={playersPagedQuery.isFetchingNextPage}
+            onClick={() => playersPagedQuery.fetchNextPage()}
+            className="rounded-lg border border-purpleFill/40 bg-purplish/30 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-purplish/50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {playersPagedQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+          </button>
         </div>
       )}
+
     </div>
   );
 };

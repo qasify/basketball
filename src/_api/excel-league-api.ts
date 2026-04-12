@@ -13,6 +13,7 @@ import {
   getLeaguesFromFirestore,
   getTeamsFromFirestore,
   getPlayerRowsByTeamIdsFromFirestore,
+  getPlayerRowsPageByTeamIdsFromFirestore,
   getPlayerRowsForIdFromFirestore,
 } from "@/server/catalog-firestore-queries";
 
@@ -218,6 +219,32 @@ export const getPlayersByTeamIds = async (teamIds: number[]): Promise<Player[]> 
   const set = new Set(teamIds);
   const rows = (playersCache ?? []).filter((p) => set.has(p.teamId));
   return mergePlayerRows(rows, leagueNameMapFromCache());
+};
+
+/** Firestore: cursor-paged raw rows → merged players (reduces reads vs loading all rows at once). JSON catalog: returns full list in one page. */
+export const getPlayersPageByTeamIds = async (
+  teamIds: number[],
+  rawLimit: number,
+  cursor: string | null
+): Promise<{ players: Player[]; nextCursor: string | null }> => {
+  if (teamIds.length === 0) return { players: [], nextCursor: null };
+
+  if (useFirestoreCatalog()) {
+    const [leagues, page] = await Promise.all([
+      getLeaguesFromFirestore(),
+      getPlayerRowsPageByTeamIdsFromFirestore(teamIds, rawLimit, cursor),
+    ]);
+    const leagueIdToName = new Map(leagues.map((l) => [l.id, l.name] as const));
+    const merged = mergePlayerRows(page.rows, leagueIdToName);
+    merged.sort((a, b) => a.name.localeCompare(b.name));
+    return { players: merged, nextCursor: page.nextCursor };
+  }
+
+  const all = await getPlayersByTeamIds(teamIds);
+  return {
+    players: all.sort((a, b) => a.name.localeCompare(b.name)),
+    nextCursor: null,
+  };
 };
 
 export const getPlayers = async (
