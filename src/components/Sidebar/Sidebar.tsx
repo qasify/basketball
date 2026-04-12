@@ -68,7 +68,7 @@ const Sidebar = () => {
       {/* User Profile */}
       <div className="flex p-3 pt-0">
         <UserProfile
-          name={user?.email?.split("@")[0] ?? ""}
+          name={user?.displayName ?? user?.email?.split("@")[0] ?? ""}
           email={user?.email ?? ""}
           handleLogout={async () => {
             await authDB.logout();
