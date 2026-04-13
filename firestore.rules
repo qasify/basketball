@@ -6,9 +6,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    /**
+     * User profiles (role, email, etc.). Client SDK: usersDB in firebase-api.ts
+     * - create: only for the signed-in user, role must be "user" (no client admin promotion).
+     * - update: only your own doc; uid/email/role/createdAt stay fixed so displayName can change.
+     */
     match /users/{docId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role == 'user'
+        && request.resource.data.email is string
+        && request.resource.data.createdAt is string;
+
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if false;
     }
 
     match /note/{docId} {

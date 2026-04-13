@@ -53,3 +53,35 @@ body {
   background-size: cover; /* Adjust to your preference */
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Sonner: keep icon + text vertically centered; violet stack above default Sonner CSS */
+[data-sonner-toaster] {
+  --width: min(100vw - 1.5rem, 26rem);
+}
+
+[data-sonner-toast] {
+  position: relative;
+}
+
+[data-sonner-toast][data-styled="true"] {
+  align-items: center;
+}
+
+[data-sonner-toast][data-styled="true"] [data-icon] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-sonner-toast][data-styled="true"] [data-content] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+[data-sonner-toast][data-styled="true"] [data-title] {
+  word-break: break-word;
+}
+
+[data-sonner-toast][data-styled="true"] [data-description] {
+  word-break: break-word;
+}

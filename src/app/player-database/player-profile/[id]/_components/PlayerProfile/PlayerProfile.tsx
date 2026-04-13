@@ -5,6 +5,12 @@ import { FaEdit, FaStickyNote } from "react-icons/fa";
 import { Player } from "@/_api/basketball-api";
 import { MouseEvent, useMemo, useState } from "react";
 import { watchListDB } from "@/_api/firebase-api";
+import { notify } from "@/lib/notify";
+import {
+  toastMessage,
+  watchlistAddedDesc,
+  watchlistAlreadyDesc,
+} from "@/utils/constants/toastMessage";
 import {
   AccordionContainer,
   AccordionContent,
@@ -33,9 +39,24 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
     event.stopPropagation();
     if (player) {
       try {
-        await watchListDB.add(player);
+        const result = await watchListDB.add(player);
+        if (result === "added") {
+          notify.success(toastMessage.watchlist.addedTitle, {
+            description: watchlistAddedDesc(player.name),
+          });
+        } else if (result === "duplicate") {
+          notify.info(toastMessage.watchlist.alreadyTitle, {
+            description: watchlistAlreadyDesc(player.name),
+          });
+        } else {
+          notify.warning(toastMessage.watchlist.signInTitle, {
+            description: toastMessage.watchlist.signInDesc,
+          });
+        }
       } catch {
-        console.error("Error adding to watchlist");
+        notify.error(toastMessage.watchlist.updateErrorTitle, {
+          description: toastMessage.watchlist.updateErrorDesc,
+        });
       }
     }
   };

@@ -21,6 +21,7 @@ const inter = Inter({
 });
 
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppToaster from "@/components/AppToaster";
 
 export default function RootLayout({
   children,
@@ -51,6 +52,7 @@ export default function RootLayout({
             </div>
           </>
         )}
+        <AppToaster />
       </body>
     </html>
   );

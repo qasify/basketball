@@ -11,6 +11,8 @@ import { FaShuffle } from "react-icons/fa6";
 import { getPlayer, searchPlayer, Player } from "@/_api/basketball-api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 
 // Debounce hook (you can place this in a separate hooks file)
 function useDebounce<T>(value: T, delay: number): T {
@@ -58,6 +60,9 @@ const Header = () => {
       }
     } catch (error) {
       console.error("Error fetching random player:", error);
+      notify.error(toastMessage.header.randomPlayerErrorTitle, {
+        description: toastMessage.header.randomPlayerErrorDesc,
+      });
     }
   };
 
@@ -84,6 +89,9 @@ const Header = () => {
         console.error("Error searching players:", error);
         setSearchError("Failed to fetch results."); // Set error message
         setSearchResults([]); // Clear results on error
+        notify.error(toastMessage.header.searchErrorTitle, {
+          description: toastMessage.header.searchErrorDesc,
+        });
       } finally {
         setIsSearching(false);
       }

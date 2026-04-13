@@ -23,6 +23,8 @@ import {
   type Team,
 } from "@/_api/excel-league-api";
 import type { PlayerSeason } from "@/_api/basketball-api";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 
 const MultiSelect = dynamic(() => import("@/components/Select/MultiSelect"), {
   ssr: false,
@@ -169,7 +171,6 @@ const PlayerDatabaseContent = () => {
   const [countries, setCountries] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const filteredPlayers = useMemo(() => {
     return players.filter((player) => {
@@ -379,7 +380,6 @@ const PlayerDatabaseContent = () => {
 
   const fetchTeamsForSelectedLeagues = async () => {
     setIsLoading(true);
-    setError(null);
     try {
       // If "All Leagues" (id 0) is selected, only fetch all teams to avoid duplicates
       const hasAllLeagues = filters.leagues.some((o) => o.value === "0");
@@ -398,8 +398,10 @@ const PlayerDatabaseContent = () => {
           : [{ label: allTeams[0].name, value: allTeams[0].id.toString() }]);
       }
     } catch (err) {
-      setError("Failed to fetch teams");
       console.error(err);
+      notify.error(toastMessage.catalog.loadTeamsTitle, {
+        description: toastMessage.catalog.loadTeamsDesc,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -407,7 +409,6 @@ const PlayerDatabaseContent = () => {
 
   const fetchPlayersForSelectedTeams = async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const useAllTeams = filters.teams.some((o) => o.value === "ALL");
       const teamIds = useAllTeams
@@ -422,8 +423,10 @@ const PlayerDatabaseContent = () => {
       const allPlayers = await getPlayersByTeamIds(teamIds);
       setPlayers(allPlayers.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
-      setError("Failed to fetch players");
       console.error(err);
+      notify.error(toastMessage.catalog.loadPlayersTitle, {
+        description: toastMessage.catalog.loadPlayersDesc,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -431,13 +434,14 @@ const PlayerDatabaseContent = () => {
 
   const fetchLeagues = async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const data = await getLeagues();
       setLeagues(data);
     } catch (err) {
-      setError("Failed to fetch leagues");
       console.error(err);
+      notify.error(toastMessage.catalog.loadLeaguesTitle, {
+        description: toastMessage.catalog.loadLeaguesDesc,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -743,10 +747,6 @@ const PlayerDatabaseContent = () => {
         <h2 className="text-md w-full text-right">
           Players Count: <b>{filteredPlayers.length}</b>
         </h2>
-      )}
-
-      {error && (
-        <div className="bg-red-50 text-red-500 p-4 rounded">{error}</div>
       )}
 
       <PlayersTable players={filteredPlayers} />

@@ -14,6 +14,12 @@ import {
 import { TooltipProvider } from "@/components/Tooltip";
 import Note from "@/components/Note";
 import { watchListDB } from "@/_api/firebase-api";
+import { notify } from "@/lib/notify";
+import {
+  toastMessage,
+  watchlistAddedDesc,
+  watchlistAlreadyDesc,
+} from "@/utils/constants/toastMessage";
 
 interface PlayerTableProps {
   players: Player[];
@@ -76,9 +82,24 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
   ) => {
     event.stopPropagation();
     try {
-      await watchListDB.add(player);
+      const result = await watchListDB.add(player);
+      if (result === "added") {
+        notify.success(toastMessage.watchlist.addedTitle, {
+          description: watchlistAddedDesc(player.name),
+        });
+      } else if (result === "duplicate") {
+        notify.info(toastMessage.watchlist.alreadyTitle, {
+          description: watchlistAlreadyDesc(player.name),
+        });
+      } else {
+        notify.warning(toastMessage.watchlist.signInTitle, {
+          description: toastMessage.watchlist.signInDesc,
+        });
+      }
     } catch {
-      console.error("Error adding to watchlist");
+      notify.error(toastMessage.watchlist.updateErrorTitle, {
+        description: toastMessage.watchlist.updateErrorDesc,
+      });
     }
   };
 

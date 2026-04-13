@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authDB } from "@/_api/firebase-api";
 import { useAuth } from "@/hooks/useAuth";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -24,17 +26,25 @@ export default function SignupPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      const msg = toastMessage.auth.passwordsMismatchBody;
+      setError(msg);
+      notify.warning(toastMessage.auth.passwordsMismatchTitle, {
+        description: msg,
+      });
       return;
     } else if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      const msg = toastMessage.auth.passwordShortBody;
+      setError(msg);
+      notify.warning(toastMessage.auth.passwordShortTitle, { description: msg });
       return;
     }
 
     try {
       await authDB.register(email, password);
     } catch {
-      setError("Failed to create account. Email might be already in use.");
+      const msg = toastMessage.auth.signUpEmailInUse;
+      setError(msg);
+      notify.error(toastMessage.auth.signUpFailedTitle, { description: msg });
     }
   };
 

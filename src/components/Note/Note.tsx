@@ -1,3 +1,5 @@
+"use client";
+
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { useEffect, useRef, useState } from "react";
 import { Save } from "lucide-react";
@@ -5,6 +7,11 @@ import Button from "@/components/Button";
 import { notesDB } from "@/_api/firebase-api";
 import { Textarea } from "../TextArea";
 import { Player } from "@/_api/basketball-api";
+import { notify } from "@/lib/notify";
+import {
+  noteSavedDesc,
+  toastMessage,
+} from "@/utils/constants/toastMessage";
 
 type NoteModalProps = {
   player: Player | null;
@@ -35,6 +42,9 @@ const NoteModal = ({
       setNote((existing as { note?: string })?.note ?? "");
     } catch {
       setNote("");
+      notify.error(toastMessage.notes.loadErrorTitle, {
+        description: toastMessage.notes.loadErrorDesc,
+      });
     }
   };
 
@@ -42,9 +52,14 @@ const NoteModal = ({
     if (player) {
       try {
         await notesDB.add(player.id, note, player.name);
+        notify.success(toastMessage.notes.savedTitle, {
+          description: noteSavedDesc(player.name),
+        });
         onClose();
       } catch {
-        console.error("Error adding note");
+        notify.error(toastMessage.notes.saveErrorTitle, {
+          description: toastMessage.notes.saveErrorDesc,
+        });
       }
     }
   };
