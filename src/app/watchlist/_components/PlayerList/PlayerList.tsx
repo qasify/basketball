@@ -1,14 +1,15 @@
 "use client";
 
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/utils/cn";
 // import { IoMdAdd, IoMdRemove } from "react-icons/io";
 // import Button from "@/components/Button";
 // import { RiPushpin2Fill } from "react-icons/ri";
-import { FBPlayer, watchListDB } from "@/_api/firebase-api";
+import { FBPlayer, notesDB, watchListDB } from "@/_api/firebase-api";
 import {
-  // FaEdit, FaPlus,
+  FaEdit,
+  FaRegTrashAlt,
   FaTrash,
 } from "react-icons/fa";
 import { Priority } from "@/types/Player";
@@ -17,6 +18,10 @@ import { TooltipProvider } from "@/components/Tooltip";
 // import Note from "@/components/Note";
 import iso3166 from "iso-3166-1";
 import Link from "next/link";
+import { COUNTRY_FLAG_ALIASES } from "@/utils/constants/countryFlagAliases";
+import { useRouter } from "next/navigation";
+import Note from "@/components/Note";
+import type { Player } from "@/_api/basketball-api";
 
 // export interface Player {
 //   id: string | number;
@@ -264,6 +269,9 @@ interface Props {
 }
 
 const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
+  const router = useRouter();
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const PLACEHOLDER_IMAGE =
     "https://img.freepik.com/premium-photo/basketball-player-logo-single-color-vector_1177187-50594.jpg";
 
@@ -314,16 +322,47 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
   //   }
   // };
 
-  // const handleNoteClick = (player: FBPlayer) => {
-  //   // setSelectedPlayer(player);
-  //   // setIsModalOpen(true);
-  // };
+  const handleNoteClick = (event: MouseEvent<HTMLDivElement>, player: FBPlayer) => {
+    event.stopPropagation();
+    setSelectedPlayer(player);
+    setIsNoteOpen(true);
+  };
 
-  const getCountryAbbreviation = (countryName: string) => {
-    if (countryName === "USA") return "us";
+  const handleDeleteNote = async (
+    event: MouseEvent<HTMLDivElement>,
+    player: FBPlayer
+  ) => {
+    event.stopPropagation();
+    try {
+      await notesDB.remove(player.id);
+      refreshPlayers();
+    } catch {
+      console.error("Error deleting note");
+    }
+  };
 
-    const country = iso3166.whereCountry(countryName);
-    return country ? country.alpha2 : "";
+  /**
+   * Normalize catalog country labels to a 2-letter code for flagcdn.
+   * Handles aliases and multi-country strings like "USA / Nigeria".
+   */
+  const getCountryCode = (countryName?: string | null): string | null => {
+    if (!countryName) return null;
+    const primaryCountry = countryName.split(/[\/,]/)[0]?.trim();
+    if (!primaryCountry) return null;
+    const normalized = primaryCountry.toLowerCase().trim();
+    const aliasCode =
+      COUNTRY_FLAG_ALIASES[normalized] ??
+      COUNTRY_FLAG_ALIASES[normalized.replace(/\./g, "")];
+    if (aliasCode) return aliasCode.toLowerCase();
+
+    const fromName = iso3166.whereCountry(primaryCountry)?.alpha2;
+    if (fromName) return fromName.toLowerCase();
+
+    // Support when source already stores "US"/"GB" or "USA"/"GBR".
+    const fromAlpha2 = iso3166.whereAlpha2(primaryCountry.toUpperCase())?.alpha2;
+    if (fromAlpha2) return fromAlpha2.toLowerCase();
+    const fromAlpha3 = iso3166.whereAlpha3(primaryCountry.toUpperCase())?.alpha2;
+    return fromAlpha3?.toLowerCase() ?? null;
   };
 
   return (
@@ -332,6 +371,7 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
         <div
           key={player.id}
           className="relative border border-borderDarkPurple rounded-lg bg-transparent transition-all p-4 cursor-pointer"
+          onClick={() => router.push(`/player-database/player-profile/${player.id}`)}
         >
           <div className="flex items-start gap-4">
             <Image
@@ -360,30 +400,28 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
                           ? "bg-blue-500/20 text-blue-400"
                           : "bg-gray/20 text-gray"
                       )}
-                      onClick={() =>
-                        handlePriorityChange(
-                          player,
-                          player.priority ?? "Medium"
-                        )
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePriorityChange(player, player.priority ?? "Medium");
+                      }}
                     >
                       •{player.priority && " "}
                       {player.priority}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    {player.country && (
-                      <Image
-                        src={`https://flagcdn.com/w20/${getCountryAbbreviation(
-                          player.country
-                        ).toLowerCase()}.png`}
-                        width={20}
-                        height={15}
-                        alt={getCountryAbbreviation(
-                          player.country
-                        ).toLowerCase()}
-                      />
-                    )}
+                    {(() => {
+                      const countryCode = getCountryCode(player.country);
+                      if (!countryCode) return null;
+                      return (
+                        <Image
+                          src={`https://flagcdn.com/w20/${countryCode}.png`}
+                          width={20}
+                          height={15}
+                          alt={countryCode.toUpperCase()}
+                        />
+                      );
+                    })()}
                     <span className="text-sm font-bold">{player.position}</span>
                     <span className="text-sm">•</span>
                     <span className="text-sm">{player.country}</span>
@@ -398,13 +436,13 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
                       handleClick={(e) => handleAddToTeam(e, player)}
                       tooltip="Add to team"
                     /> */}
-                    {/* <TooltipIconButton
-                      icon={<FaEdit className="text-white" size={14} />}
-                      handleClick={() => handleNoteClick(player)}
-                      tooltip="Add note"
-                    /> */}
                     <TooltipIconButton
-                      icon={<FaTrash className="text-white" size={14} />}
+                      icon={<FaEdit className="text-white" size={14} />}
+                      handleClick={(e) => handleNoteClick(e, player)}
+                      tooltip={player.notes?.length ? "Edit note" : "Add note"}
+                    />
+                    <TooltipIconButton
+                      icon={<FaTrash className="text-red-500" size={14} />}
                       handleClick={(e) => handleRemove(e, player)}
                       tooltip="Remove from watchlist"
                     />
@@ -414,8 +452,24 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
 
               {player.notes &&
                 player.notes.map((note, index) => (
-                  <div className="mt-3 text-sm text-gray-400 border border-borderPurple p-2 rounded" key={index}>
-                    {note.note}
+                  <div
+                    className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-[10px]"
+                    key={index}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm leading-relaxed text-textGrey">
+                        {note.note}
+                      </p>
+                      <TooltipProvider>
+                        <TooltipIconButton
+                          icon={
+                            <FaRegTrashAlt className="text-red-300" size={13} />
+                          }
+                          handleClick={(e) => handleDeleteNote(e, player)}
+                          tooltip="Delete note"
+                        />
+                      </TooltipProvider>
+                    </div>
                   </div>
                 ))}
             </div>
@@ -434,14 +488,15 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
           </Link>
         </div>
       )}
-      {/* // {isModalOpen && selectedPlayer && (
-      //   <Note
-      //     isOpen={isModalOpen}
-      //     onClose={() => setIsModalOpen(false)}
-      //     playerId={selectedPlayer.id}
-      //     onSave={refreshPlayers}
-      //   />
-      // )} */}
+      <Note
+        isOpen={isNoteOpen}
+        onClose={() => {
+          setIsNoteOpen(false);
+          setSelectedPlayer(null);
+          refreshPlayers();
+        }}
+        player={selectedPlayer}
+      />
     </div>
   );
 };

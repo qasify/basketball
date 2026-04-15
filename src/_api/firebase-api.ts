@@ -343,6 +343,23 @@ export const notesDB = {
       return undefined;
     }
   },
+  remove: async (playerId: number) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+
+    const q = query(
+      collection(db, NOTE_COLLECTION),
+      where("id", "==", playerId)
+    );
+    const querySnapshot = await getDocs(q);
+    const existingDoc = querySnapshot.docs.find(
+      (doc) => doc.data().user === userEmail
+    );
+    if (!existingDoc) return;
+
+    const docRef = doc(db, NOTE_COLLECTION, existingDoc.id);
+    await deleteDoc(docRef);
+  },
 };
 
 export const leaguePlayerProfileDB = {
