@@ -8,8 +8,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
+          // Keep list/detail data fresh enough for navigation while avoiding frequent refetches.
           queries: {
+            // 5 minutes
             staleTime: 5 * 60 * 1000,
+            // 30 minutes
             gcTime: 30 * 60 * 1000,
             retry: 1,
           },
