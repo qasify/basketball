@@ -1,0 +1,18 @@
+export const COUNTRY_FLAG_ALIASES: Record<string, string> = {
+  usa: "US",
+  "u.s.a": "US",
+  us: "US",
+  "u.s.": "US",
+  "united states": "US",
+  "united states of america": "US",
+  america: "US",
+  england: "GB",
+  scotland: "GB",
+  wales: "GB",
+  "northern ireland": "GB",
+  uk: "GB",
+  "u.k.": "GB",
+  "great britain": "GB",
+  "united kingdom": "GB",
+  korea: "KR",
+};
