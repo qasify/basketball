@@ -121,10 +121,10 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
             <TextItem label="Position" value={player?.position} />
             <TextItem label="Country" value={player?.country} />
             <TextItem label="Age" value={player?.age} />
-            <TextItem label="Number" value={player?.number} />
+            {/* <TextItem label="Number" value={player?.number} /> */}
             <TextItem label="Height" value={player?.height} />
             <TextItem label="Weight" value={player?.weight} />
-            <TextItem label="Status" value={player?.salary} />
+            {/* <TextItem label="Status" value={player?.salary} /> */}
             <TextItem label="Contract" value={player?.contract} />
             <TextItem label="Agency" value={player?.agency} />
             {/* Task 10: Seasons Played commented out */}
