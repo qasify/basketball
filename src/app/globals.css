@@ -51,5 +51,4 @@ body {
   color: var(--foreground);
   background: var(--background) var(--background-svg) no-repeat center center;
   background-size: cover; /* Adjust to your preference */
-  font-family: Arial, Helvetica, sans-serif;
 }
