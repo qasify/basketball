@@ -38,6 +38,7 @@ export function useUserNotes(limit: number) {
               const p = await getPlayer(id);
               next[id] = {
                 name: p.name ?? "",
+                image: p.image,
                 country: p.country,
                 position: p.position,
                 team: p.team,

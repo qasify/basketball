@@ -9,9 +9,9 @@ import {
   displayNotePlayerName,
   formatNotePlayerExtras,
   formatNoteTimestamp,
-  noteInitials,
 } from "../../../_utils/notes";
 import NoteIdCountryBadges from "../../../_components/LatestNotes/_components/NoteIdCountryBadges";
+import NotePlayerAvatar from "../../../_components/LatestNotes/_components/NotePlayerAvatar";
 import TooltipIconButton from "@/components/TooltipIconButton";
 
 type Props = {
@@ -32,19 +32,17 @@ const NoteRowFull = ({
   const displayName = displayNotePlayerName(row, playerMetaById);
   const meta = playerMetaById[row.playerId];
   const when = formatNoteTimestamp(row.dateTime);
-  const initials = noteInitials(displayName, row.playerId);
   const extras = formatNotePlayerExtras(meta);
 
   return (
     <li className="py-4 first:pt-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between gap-y-3">
         <div className="flex gap-3 min-w-0 flex-1">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purplish/40 text-xs font-semibold text-white ring-1 ring-white/10"
-            aria-hidden
-          >
-            {initials}
-          </div>
+          <NotePlayerAvatar
+            imageUrl={meta?.image}
+            alt={displayName}
+            size="md"
+          />
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2 gap-y-1">
               <Link

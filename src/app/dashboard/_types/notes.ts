@@ -4,6 +4,8 @@
  */
 export type NotePlayerMeta = {
   name: string;
+  /** Player photo URL from roster data; falls back to watchlist placeholder in UI. */
+  image?: string;
   country?: string;
   position?: string;
   team?: string;
