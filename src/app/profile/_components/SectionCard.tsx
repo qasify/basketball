@@ -15,7 +15,7 @@ export function SectionCard({
         className
       )}
     >
-      <div className="mb-5 flex items-start gap-3 border-b border-white/10 pb-4">
+      <div className="mb-5 flex shrink-0 items-start gap-3 border-b border-white/10 pb-4">
         {icon && (
           <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purpleFill/25 bg-purplish/15 text-purpleFill">
             {icon}

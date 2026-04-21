@@ -1,8 +1,8 @@
 import React from "react";
 import Banner from "./_components/Banner";
 import { banner } from "./_utils/banners";
-import Matches from "./_components/Matches";
-import { sampleMatches } from "./_utils/matches";
+// import Matches from "./_components/Matches";
+// import { sampleMatches } from "./_utils/matches";
 import Watchlist from "./_components/WatchList";
 // import DailyReaders from "./_components/DailyLeaders";
 // import LatestNews from "./_components/LatestNews";
@@ -23,7 +23,7 @@ const Dashboard = () => {
       {/* left content */}
       <div className="flex-[3] flex flex-col gap-6">
         <Banner {...banner} />
-        <Matches matches={sampleMatches} />
+        {/* <Matches matches={sampleMatches} /> */}
         {/* <div className="flex flex-col gap-6 lg:flex-row">
           <PerformanceChart data={data} />
           <WinLossChart wins={10} losses={3} />

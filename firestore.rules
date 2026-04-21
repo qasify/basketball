@@ -60,3 +60,80 @@ service cloud.firestore {
     }
   }
 }
+rules_version = '2';
+
+// Merge with your project if you already maintain rules elsewhere.
+// Deploy: Firebase Console → Firestore → Rules, or `firebase deploy --only firestore:rules`
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Excel catalog (leagues / teams / player rows) — written only via Admin SDK
+     * (import script or future Cloud Functions). The Next.js server reads with
+     * firebase-admin when USE_FIRESTORE_CATALOG=true. No client access by default.
+     */
+    match /catalogLeagues/{docId} {
+      allow read, write: if false;
+    }
+    match /catalogTeams/{docId} {
+      allow read, write: if false;
+    }
+    match /catalogPlayerRows/{docId} {
+      allow read, write: if false;
+    }
+
+    match /users/{docId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if false;
+    }
+
+    match /note/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /watchlist/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /team/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /league-player-profile/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Scouting reports: use `allow read: if true` if guests should read without auth
+    match /scouting-report/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    /**
+     * Global org activity feed — one stream for the team.
+     * Read: any signed-in user. Create: only if actorUid matches auth (no impersonation).
+     */
+    match /activities/{docId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.actionType is string
+        && request.resource.data.actionType in [
+          'WATCHLIST_ADDED',
+          'WATCHLIST_REMOVED',
+          'NOTE_SAVED',
+          'SCOUTING_REPORT_GENERATED',
+          'SCOUTING_REPORT_UPDATED',
+          'SCOUTING_REPORT_NOTES_SAVED'
+        ];
+
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
