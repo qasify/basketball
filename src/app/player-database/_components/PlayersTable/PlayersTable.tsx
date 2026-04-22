@@ -6,11 +6,7 @@ import { Player } from "@/_api/basketball-api";
 import { SortDirection, TableColumn } from "@/types/Table";
 import Link from "next/link";
 import TooltipIconButton from "@/components/TooltipIconButton";
-import {
-  FaEdit,
-  // FaPlus,
-  FaStar,
-} from "react-icons/fa";
+import { FaEdit, FaStar, FaTrash, FaStickyNote } from "react-icons/fa";
 import { TooltipProvider } from "@/components/Tooltip";
 import Note from "@/components/Note";
 import { watchListDB } from "@/_api/firebase-api";
@@ -20,18 +16,30 @@ import {
   watchlistAddedDesc,
   watchlistAlreadyDesc,
 } from "@/utils/constants/toastMessage";
+import { getAuth } from "firebase/auth";
+import { deleteCatalogPlayerAction } from "@/_api/catalog-player-actions";
+import CatalogPlayerEditModal from "../CatalogPlayerEditModal";
 
 interface PlayerTableProps {
   players: Player[];
+  /** Firestore catalog CRUD (admin + USE_FIRESTORE_CATALOG) */
+  catalogCrud?: {
+    enabled: boolean;
+    onInvalidate: () => void;
+  };
 }
 
-const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
+const PlayersTable: FC<PlayerTableProps> = ({ players, catalogCrud }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<keyof Player | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notePlayer, setNotePlayer] = useState<Player | null>(null);
+  const [catalogEditPlayer, setCatalogEditPlayer] = useState<Player | null>(
+    null
+  );
+  const [catalogEditOpen, setCatalogEditOpen] = useState(false);
 
   const handleSort = (key?: keyof Player) => {
     if (!key) return; // no key, do nothing
@@ -113,6 +121,38 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
     setIsModalOpen(true);
   };
 
+  const handleCatalogEdit = (player: Player) => {
+    setCatalogEditPlayer(player);
+    setCatalogEditOpen(true);
+  };
+
+  const handleCatalogDelete = async (player: Player) => {
+    if (!catalogCrud?.enabled) return;
+    if (
+      !window.confirm(
+        `Delete "${player.name}" from the Firestore catalog? This removes all season rows for this player.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        alert("Sign in required.");
+        return;
+      }
+      const res = await deleteCatalogPlayerAction(token, player);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      catalogCrud.onInvalidate();
+    } catch {
+      alert("Delete failed.");
+    }
+  };
+
   const playerColumns: TableColumn<Player & { action?: string }>[] = [
     {
       label: "Name",
@@ -138,10 +178,10 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
       cellRenderer: (_, player) => {
         return (
           <TooltipProvider>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               <TooltipIconButton
                 tooltip="Add note"
-                icon={<FaEdit className="text-white text-xs" size={10} />}
+                icon={<FaStickyNote className="text-white text-xs" size={10} />}
                 handleClick={() => handleNoteClick(player)}
               />
               <TooltipIconButton
@@ -149,6 +189,20 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
                 icon={<FaStar className="text-white text-xs" size={10} />}
                 handleClick={(e) => handleAddToWatchList(e, player)}
               />
+              {catalogCrud?.enabled && (
+                <>
+                  <TooltipIconButton
+                    tooltip="Edit player"
+                    icon={<FaEdit className="text-white text-xs" size={10} />}
+                    handleClick={() => handleCatalogEdit(player)}
+                  />
+                  <TooltipIconButton
+                    tooltip="Delete from catalog"
+                    icon={<FaTrash className="text-red-300 text-xs" size={10} />}
+                    handleClick={() => handleCatalogDelete(player)}
+                  />
+                </>
+              )}
             </div>
           </TooltipProvider>
         );
@@ -178,6 +232,15 @@ const PlayersTable: FC<PlayerTableProps> = ({ players }) => {
         player={notePlayer}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+      />
+      <CatalogPlayerEditModal
+        player={catalogEditPlayer}
+        isOpen={catalogEditOpen}
+        onClose={() => {
+          setCatalogEditOpen(false);
+          setCatalogEditPlayer(null);
+        }}
+        onSaved={() => catalogCrud?.onInvalidate()}
       />
     </div>
   );

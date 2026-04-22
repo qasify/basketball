@@ -2,6 +2,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import PlayerDatabaseCatalogHeader from "./_components/PlayerDatabaseCatalogHeader";
 
 const PlayerDatabaseContent = dynamic(
   () => import("./_components/PlayerDatabaseContent"),
@@ -10,6 +11,10 @@ const PlayerDatabaseContent = dynamic(
     loading: () => <div className="min-h-[500px]" />,
   }
 );
+
+const catalogCrudEnabled =
+  process.env.USE_FIRESTORE_CATALOG === "true" ||
+  process.env.USE_FIRESTORE_CATALOG === "1";
 
 const PlayerDatabase = () => {
   return (
@@ -22,10 +27,8 @@ const PlayerDatabase = () => {
         <IoMdArrowRoundBack size={20} className="shrink-0" />
         Back to Dashboard
       </Link>
-      <h2 className="text-white text-xl font-bold uppercase">
-        Player Database
-      </h2>
-      <PlayerDatabaseContent />
+      <PlayerDatabaseCatalogHeader catalogCrudEnabled={catalogCrudEnabled} />
+      <PlayerDatabaseContent catalogCrudEnabled={catalogCrudEnabled} />
     </div>
   );
 };

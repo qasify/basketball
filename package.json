@@ -8,15 +8,19 @@
     "build": "npm run preprocess-data && next build",
     "start": "next start",
     "lint": "next lint",
-    "preprocess-data": "node scripts/preprocess-data.js"
+    "preprocess-data": "node scripts/preprocess-data.js",
+    "import:firestore": "node scripts/import-catalog-to-firestore.mjs",
+    "catalog:sync": "node scripts/catalog-sync.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-slider": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "@tanstack/react-query": "^5.99.0",
     "clsx": "^2.1.1",
     "firebase": "^11.6.0",
+    "firebase-admin": "^13.8.0",
     "iso-3166-1": "^2.1.1",
     "lucide-react": "^0.477.0",
     "next": "^16.1.1",
@@ -26,6 +30,7 @@
     "react-select": "^5.10.0",
     "recharts": "^2.15.1",
     "sonner": "^2.0.7",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.0.2",
     "xlsx": "^0.18.5"
   },
@@ -34,6 +39,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
     "postcss": "^8",

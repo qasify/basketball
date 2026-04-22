@@ -22,6 +22,7 @@ const inter = Inter({
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppToaster from "@/components/AppToaster";
+import { QueryProvider } from "@/components/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -42,15 +43,17 @@ export default function RootLayout({
             {children}
           </div>
         ) : (
-          <>
-            <Sidebar />
-            <div className="flex flex-col h-[100vh] overflow-auto flex-1">
-              <Header />
-              <ProtectedRoute>
-                {children}
-              </ProtectedRoute>
+          <QueryProvider>
+            <div className="flex w-full h-[100vh]">
+              <Sidebar />
+              <div className="flex flex-col h-full overflow-auto flex-1">
+                <Header />
+                <ProtectedRoute>
+                  {children}
+                </ProtectedRoute>
+              </div>
             </div>
-          </>
+          </QueryProvider>
         )}
         <AppToaster />
       </body>

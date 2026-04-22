@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  /** Avoid bundling native / large deps used only in server actions */
+  serverExternalPackages: ["firebase-admin"],
   images: {
     remotePatterns: [
       {
