@@ -2,39 +2,39 @@ name: Update Player Data
 
 on:
   schedule:
-      - cron: "0 4 * * *"
-        workflow_dispatch:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
 
-        jobs:
-          update-data:
-              runs-on: ubuntu-latest
-                  permissions:
-                        contents: write
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-                            steps:
-                                  - name: Checkout repository
-                                          uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-                                                - name: Setup Node.js
-                                                        uses: actions/setup-node@v4
-                                                                with:
-                                                                          node-version: "20"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-                                                                                - name: Fetch player data from API-Basketball
-                                                                                        env:
-                                                                                                  API_BASKETBALL_KEY: ${{ secrets.API_BASKETBALL_KEY }}
-                                                                                                          run: node scripts/fetch-api-data.js
-                                                                                                          
-                                                                                                                - name: Check for changes
-                                                                                                                        id: changes
-                                                                                                                                run: |
-                                                                                                                                          git diff --quiet public/data/ || echo "changed=true" >> $GITHUB_OUTPUT
-                                                                                                                                          
-                                                                                                                                                - name: Commit and push updated data
-                                                                                                                                                        if: steps.changes.outputs.changed == 'true'
-                                                                                                                                                                run: |
-                                                                                                                                                                          git config user.name "github-actions[bot]"
-                                                                                                                                                                                    git config user.email "github-actions[bot]@users.noreply.github.com"
-                                                                                                                                                                                              git add public/data/players.json public/data/teams.json public/data/leagues.json
-                                                                                                                                                                                                        git commit -m "chore: update player data [$(date +'%Y-%m-%d')]"
-                                                                                                                                                                                                                  git push
+      - name: Fetch player data from API-Basketball
+        env:
+          API_BASKETBALL_KEY: ${{ secrets.API_BASKETBALL_KEY }}
+        run: node scripts/fetch-api-data.js
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet public/data/ || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push updated data
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/players.json public/data/teams.json public/data/leagues.json
+          git commit -m "chore: update player data [$(date +'%Y-%m-%d')]"
+          git push
