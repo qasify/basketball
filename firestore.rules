@@ -18,6 +18,21 @@ service cloud.firestore {
      * - create: only for the signed-in user, role must be "user" (no client admin promotion).
      * - update: only your own doc; uid/email/role/createdAt stay fixed so displayName can change.
      */
+    /**
+     * Excel catalog (leagues / teams / player rows) — written only via Admin SDK
+     * (import script or future Cloud Functions). The Next.js server reads with
+     * firebase-admin when USE_FIRESTORE_CATALOG=true. No client access by default.
+     */
+    match /catalogLeagues/{docId} {
+      allow read, write: if false;
+    }
+    match /catalogTeams/{docId} {
+      allow read, write: if false;
+    }
+    match /catalogPlayerRows/{docId} {
+      allow read, write: if false;
+    }
+
     match /users/{docId} {
       allow read: if request.auth != null;
 
