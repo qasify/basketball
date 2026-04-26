@@ -7,6 +7,12 @@ import Input from "../Input";
 import { IoIosSearch } from "react-icons/io";
 import Button from "../Button";
 import { FaShuffle } from "react-icons/fa6";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/Tooltip";
 // Import Player type and searchPlayer function
 import { getPlayer, searchPlayer, Player } from "@/_api/basketball-api";
 import { useRouter } from "next/navigation";
@@ -187,7 +193,21 @@ const Header = () => {
             </div>
           )}
         </div>
-        <Button icon={<FaShuffle size={14} />} onClick={handleRandomSelect} />
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div aria-label="Discover a random player">
+                <Button
+                  icon={<FaShuffle size={14} />}
+                  onClick={handleRandomSelect}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="border-borderDarkPurple bg-nav-gradient text-white">
+              Discover a random player
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Link href="/notifications" className="px-4">
           <Image
             src="/icons/sidebar/notifications.png"
