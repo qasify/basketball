@@ -90,6 +90,8 @@ export interface PlayerSeason {
 
 export interface Player {
   id: number;
+  /** When set on catalog rows, merges all seasons under one profile and matches imports. */
+  realgmId?: number;
   name: string;
   number?: string;
   position?: string;
