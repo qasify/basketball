@@ -13,6 +13,16 @@ export function getActionLabel(actionType: ActivityActionType): string {
   return ACTION_LABELS[actionType] ?? actionType;
 }
 
+/** Returns empty string if missing or invalid (avoids “Jan 1970” style artifacts). */
+export function safeFormatRelativeTime(
+  isoString: string | null | undefined
+): string {
+  if (isoString == null || String(isoString).trim() === "") return "";
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatRelativeTime(isoString);
+}
+
 export function formatRelativeTime(isoString: string): string {
   const date = new Date(isoString);
   const now = new Date();
