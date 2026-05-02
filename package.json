@@ -8,7 +8,7 @@
     "build": "npm run preprocess-data && next build",
     "start": "next start",
     "lint": "next lint",
-    "preprocess-data": "node scripts/preprocess-data.js",
+    "preprocess-data": "node scripts/preprocess-data.mjs",
     "import:firestore": "node scripts/import-catalog-to-firestore.mjs",
     "catalog:sync": "node scripts/catalog-sync.mjs"
   },
