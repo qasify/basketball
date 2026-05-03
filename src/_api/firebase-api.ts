@@ -103,6 +103,8 @@ export interface Note {
   dateTime: string;
   /** Denormalized for lists (e.g. latest notes) */
   playerName?: string;
+  /** Set when loaded from `notesDB.get` — Firestore doc id for `notesDB.remove` */
+  firestoreId?: string;
 }
 
 export type LatestNoteItem = {
@@ -355,7 +357,7 @@ export const notesDB = {
     const querySnapshot = await getDocs(q);
     
     const userNotes = querySnapshot.docs
-      .map((doc) => doc.data() as Note)
+      .map((d) => ({ ...(d.data() as Note), firestoreId: d.id }))
       .filter((note) => note.user === userEmail);
 
     if (userNotes.length > 0) {
