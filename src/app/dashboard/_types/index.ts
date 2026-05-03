@@ -3,3 +3,4 @@ export * from "./Match";
 export * from "./Chart";
 export * from "./TeamRanking";
 export * from "./DailyLeader";
+export * from "./notes";
