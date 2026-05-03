@@ -16,6 +16,8 @@ import { InfoRow } from "./InfoRow";
 import { SectionCard } from "./SectionCard";
 import { ProfileHero } from "./ProfileHero";
 import { ProfilePasswordSection } from "./ProfilePasswordSection";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 
 export default function ProfileView() {
   const { user, role, loading: authLoading } = useAuth();
@@ -77,8 +79,12 @@ export default function ProfileView() {
       setEditingName(false);
       setNameSaved(true);
       setTimeout(() => setNameSaved(false), 3000);
+      notify.success(toastMessage.profile.displayNameSaved);
     } catch {
       setNameError("Failed to update name. Try again.");
+      notify.error(toastMessage.profile.displayNameErrorTitle, {
+        description: toastMessage.profile.displayNameErrorDesc,
+      });
     } finally {
       setSavingName(false);
     }
@@ -123,12 +129,21 @@ export default function ProfileView() {
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setPasswordSaved(false), 4000);
+      notify.success(toastMessage.profile.passwordUpdatedTitle, {
+        description: toastMessage.profile.passwordUpdatedDesc,
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to change password.";
       if (msg.includes("wrong-password") || msg.includes("invalid-credential")) {
         setPasswordError("Current password is incorrect.");
+        notify.error(toastMessage.profile.passwordWrongTitle, {
+          description: toastMessage.profile.passwordWrongDesc,
+        });
       } else {
         setPasswordError(msg);
+        notify.error(toastMessage.profile.passwordChangeErrorTitle, {
+          description: msg,
+        });
       }
     } finally {
       setPasswordSaving(false);

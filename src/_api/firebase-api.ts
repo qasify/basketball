@@ -130,10 +130,12 @@ export interface ScoutingReportRecord {
   userNotes?: Record<string, string>;
 }
 
+export type WatchlistAddResult = "added" | "duplicate" | "no-auth";
+
 export const watchListDB = {
-  add: async (player: Player) => {
+  add: async (player: Player): Promise<WatchlistAddResult> => {
     const userEmail = auth.currentUser?.email;
-    if (!userEmail) return;
+    if (!userEmail) return "no-auth";
 
     const q = query(
       collection(db, WATCHLIST_COLLECTION),
@@ -153,7 +155,9 @@ export const watchListDB = {
         playerId: player.id,
         playerName: player.name,
       }).catch(() => {});
+      return "added";
     }
+    return "duplicate";
   },
   getAll: async () => {
     const userEmail = auth.currentUser?.email;

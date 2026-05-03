@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authDB } from '@/_api/firebase-api';
 import { useAuth } from '@/hooks/useAuth';
+import { notify } from '@/lib/notify';
+import { toastMessage } from '@/utils/constants/toastMessage';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,7 +27,9 @@ export default function LoginPage() {
       await authDB.login(email, password);
       // No need to store in localStorage, Firebase handles the session
     } catch {
-      setError('Invalid email or password');
+      const msg = toastMessage.auth.invalidCredentials;
+      setError(msg);
+      notify.error(toastMessage.auth.signInFailedTitle, { description: msg });
     }
   };
 

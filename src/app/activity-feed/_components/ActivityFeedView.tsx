@@ -12,6 +12,8 @@ import {
 } from "@/_api/activity-api";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/utils/cn";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 
 const PAGE_SIZE = 6;
 
@@ -92,7 +94,12 @@ export default function ActivityFeedView() {
         setHasNext(entry.hasMore);
       } catch (err) {
         console.error("Activity feed:", err);
-        if (!cancelled) setError("load-failed");
+        if (!cancelled) {
+          setError("load-failed");
+          notify.error(toastMessage.activityFeed.loadErrorTitle, {
+            description: toastMessage.activityFeed.loadErrorDesc,
+          });
+        }
       } finally {
         if (!cancelled) {
           setFeedLoading(false);

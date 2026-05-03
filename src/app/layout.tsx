@@ -21,6 +21,7 @@ const inter = Inter({
 });
 
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppToaster from "@/components/AppToaster";
 import { QueryProvider } from "@/components/QueryProvider";
 
 export default function RootLayout({
@@ -54,6 +55,7 @@ export default function RootLayout({
             </div>
           </QueryProvider>
         )}
+        <AppToaster />
       </body>
     </html>
   );

@@ -9,7 +9,7 @@ import TooltipIconButton from "@/components/TooltipIconButton";
 import { FaEdit, FaStar, FaTrash, FaStickyNote } from "react-icons/fa";
 import { TooltipProvider } from "@/components/Tooltip";
 import Note from "@/components/Note";
-import { watchListDB } from "@/_api/firebase-api";
+import { addToWatchlistWithToast } from "@/lib/watchlist-actions";
 import { getAuth } from "firebase/auth";
 import { deleteCatalogPlayerAction } from "@/_api/catalog-player-actions";
 import CatalogPlayerEditModal from "../CatalogPlayerEditModal";
@@ -83,11 +83,7 @@ const PlayersTable: FC<PlayerTableProps> = ({ players, catalogCrud }) => {
     player: Player
   ) => {
     event.stopPropagation();
-    try {
-      await watchListDB.add(player);
-    } catch {
-      console.error("Error adding to watchlist");
-    }
+    await addToWatchlistWithToast(player);
   };
 
   const handleCloseModal = () => {

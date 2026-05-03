@@ -4,7 +4,7 @@ import Button from "@/components/Button";
 import { FaEdit, FaStickyNote } from "react-icons/fa";
 import { Player } from "@/_api/basketball-api";
 import { MouseEvent, useMemo, useState } from "react";
-import { watchListDB } from "@/_api/firebase-api";
+import { addToWatchlistWithToast } from "@/lib/watchlist-actions";
 import {
   AccordionContainer,
   AccordionContent,
@@ -31,13 +31,8 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
 
   const handleAddToWatchList = async (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (player) {
-      try {
-        await watchListDB.add(player);
-      } catch {
-        console.error("Error adding to watchlist");
-      }
-    }
+    if (!player) return;
+    await addToWatchlistWithToast(player);
   };
 
   const TextItem = ({

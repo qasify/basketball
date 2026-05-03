@@ -33,6 +33,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    /**
+     * User profiles (role, email, etc.). Client SDK: usersDB in firebase-api.ts
+     * - create: only for the signed-in user, role must be "user" (no client admin promotion).
+     * - update: only your own doc; uid/email/role/createdAt stay fixed so displayName can change.
+     */
     match /users/{docId} {
       allow read: if request.auth != null;
 

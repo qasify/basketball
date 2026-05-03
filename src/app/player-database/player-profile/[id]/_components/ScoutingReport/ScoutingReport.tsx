@@ -16,6 +16,11 @@ import { scoutingReportDB } from "@/_api/firebase-api";
 import { logActivity } from "@/_api/activity-api";
 import { useAuth } from "@/hooks/useAuth";
 import { isAdminEmail } from "@/utils/auth";
+import { notify } from "@/lib/notify";
+import {
+  scoutingGeneratedDesc,
+  toastMessage,
+} from "@/utils/constants/toastMessage";
 
 type ScoutingReportProps = {
   player: Player | null;
@@ -78,9 +83,12 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
       } catch (err) {
         if (!cancelled) {
           console.error("Error loading saved scouting report:", err);
-          setError(
-            err instanceof Error ? err.message : "Failed to load scouting report."
-          );
+          const msg =
+            err instanceof Error ? err.message : "Failed to load scouting report.";
+          setError(msg);
+          notify.error(toastMessage.scouting.loadErrorTitle, {
+            description: msg,
+          });
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -102,6 +110,9 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
     try {
       const generatedReport = await generateScoutingReport(player);
       setReport(generatedReport);
+      notify.success(toastMessage.scouting.generateReadyTitle, {
+        description: scoutingGeneratedDesc(player.name),
+      });
       // Persist to Firebase when a user is logged in
       try {
         await scoutingReportDB.save(player.id, generatedReport);
@@ -114,14 +125,20 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         }).catch(() => {});
       } catch (err) {
         console.error("Error saving scouting report to Firebase:", err);
+        notify.warning(toastMessage.scouting.cloudWarningTitle, {
+          description: toastMessage.scouting.cloudWarningDesc,
+        });
       }
 
     } catch (err) {
-      setError(
+      const msg =
         err instanceof Error
           ? err.message
-          : "Failed to generate scouting report. Please try again."
-      );
+          : "Failed to generate scouting report. Please try again.";
+      setError(msg);
+      notify.error(toastMessage.scouting.generateErrorTitle, {
+        description: msg,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -139,8 +156,14 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         playerName: player.name,
         description: "Saved scouting report notes",
       }).catch(() => {});
+      notify.success(toastMessage.scouting.notesSavedTitle, {
+        description: toastMessage.scouting.notesSavedDesc,
+      });
     } catch (err) {
       console.error("Error saving notes:", err);
+      notify.error(toastMessage.scouting.notesErrorTitle, {
+        description: toastMessage.scouting.notesErrorDesc,
+      });
     } finally {
       setSavingNotes(false);
     }
@@ -162,8 +185,16 @@ const ScoutingReportComponent = ({ player }: ScoutingReportProps) => {
         playerName: player.name,
         description: "Updated scouting report with AI",
       }).catch(() => {});
+      notify.success(toastMessage.scouting.aiUpdatedTitle, {
+        description: toastMessage.scouting.aiUpdatedDesc,
+      });
     } catch (err) {
-      setExtendError(err instanceof Error ? err.message : "Failed to update report with AI.");
+      const msg =
+        err instanceof Error
+          ? err.message
+          : toastMessage.scouting.aiErrorFallbackBody;
+      setExtendError(msg);
+      notify.error(toastMessage.scouting.aiErrorTitle, { description: msg });
     } finally {
       setIsExtending(false);
     }

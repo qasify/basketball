@@ -7,6 +7,12 @@ import { cn } from "@/utils/cn";
 // import Button from "@/components/Button";
 // import { RiPushpin2Fill } from "react-icons/ri";
 import { FBPlayer, watchListDB } from "@/_api/firebase-api";
+import { notify } from "@/lib/notify";
+import {
+  toastMessage,
+  watchlistPriorityDesc,
+  watchlistRemovedDesc,
+} from "@/utils/constants/toastMessage";
 import {
   // FaEdit, FaPlus,
   FaTrash,
@@ -281,9 +287,14 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
           priority: nextPriority,
         });
         refreshPlayers();
+        notify.success(toastMessage.watchlist.priorityTitle, {
+          description: watchlistPriorityDesc(player.name, nextPriority),
+        });
       }
     } catch {
-      console.error("Error updating Priority");
+      notify.error(toastMessage.watchlist.priorityErrorTitle, {
+        description: toastMessage.watchlist.priorityErrorDesc,
+      });
     }
   };
 
@@ -295,8 +306,13 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
     try {
       await watchListDB.remove(player.documentId);
       refreshPlayers();
+      notify.success(toastMessage.watchlist.removedTitle, {
+        description: watchlistRemovedDesc(player.name),
+      });
     } catch {
-      console.error("Error removing from watchlist");
+      notify.error(toastMessage.watchlist.removeErrorTitle, {
+        description: toastMessage.watchlist.removeErrorDesc,
+      });
     }
   };
 

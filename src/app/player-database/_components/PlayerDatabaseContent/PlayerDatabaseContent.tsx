@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Input from "@/components/Input";
 import { IoIosSearch } from "react-icons/io";
@@ -27,6 +31,8 @@ import {
   type Team,
 } from "@/_api/excel-league-api";
 import type { PlayerSeason } from "@/_api/basketball-api";
+import { notify } from "@/lib/notify";
+import { toastMessage } from "@/utils/constants/toastMessage";
 import { combineMergedPlayerPages } from "@/utils/mergePlayerPageChunks";
 
 const MultiSelect = dynamic(() => import("@/components/Select/MultiSelect"), {
@@ -125,19 +131,81 @@ const STAT_FILTER_CONFIG: {
   isPercentage: boolean;
   isRange: boolean;
 }[] = [
-  { filterKey: "noOfGamesPlayed", seasonKey: "gamesPlayed", label: "# of Games Played", isPercentage: false, isRange: false },
-  { filterKey: "rebG", seasonKey: "reboundsPerGame", label: "REB/G", isPercentage: false, isRange: false },
-  { filterKey: "astG", seasonKey: "assistsPerGame", label: "AST/G", isPercentage: false, isRange: false },
-  { filterKey: "ptsG", seasonKey: "pointsPerGame", label: "PTS/G", isPercentage: false, isRange: false },
-  { filterKey: "fgPercentage", seasonKey: "fieldGoalPercent", label: "FG%", isPercentage: true, isRange: false },
-  { filterKey: "minutesG", seasonKey: "minutesPerGame", label: "Minutes/G", isPercentage: false, isRange: true },
-  { filterKey: "stlG", seasonKey: "stealsPerGame", label: "STL/G", isPercentage: false, isRange: false },
-  { filterKey: "blkG", seasonKey: "blocksPerGame", label: "BLK/G", isPercentage: false, isRange: false },
-  { filterKey: "threePtPercentage", seasonKey: "threePointPercent", label: "3PT%", isPercentage: true, isRange: false },
-  { filterKey: "ftPercentage", seasonKey: "freeThrowPercent", label: "FT%", isPercentage: true, isRange: false },
+  {
+    filterKey: "noOfGamesPlayed",
+    seasonKey: "gamesPlayed",
+    label: "# of Games Played",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "rebG",
+    seasonKey: "reboundsPerGame",
+    label: "REB/G",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "astG",
+    seasonKey: "assistsPerGame",
+    label: "AST/G",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "ptsG",
+    seasonKey: "pointsPerGame",
+    label: "PTS/G",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "fgPercentage",
+    seasonKey: "fieldGoalPercent",
+    label: "FG%",
+    isPercentage: true,
+    isRange: false,
+  },
+  {
+    filterKey: "minutesG",
+    seasonKey: "minutesPerGame",
+    label: "Minutes/G",
+    isPercentage: false,
+    isRange: true,
+  },
+  {
+    filterKey: "stlG",
+    seasonKey: "stealsPerGame",
+    label: "STL/G",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "blkG",
+    seasonKey: "blocksPerGame",
+    label: "BLK/G",
+    isPercentage: false,
+    isRange: false,
+  },
+  {
+    filterKey: "threePtPercentage",
+    seasonKey: "threePointPercent",
+    label: "3PT%",
+    isPercentage: true,
+    isRange: false,
+  },
+  {
+    filterKey: "ftPercentage",
+    seasonKey: "freeThrowPercent",
+    label: "FT%",
+    isPercentage: true,
+    isRange: false,
+  },
 ];
 
-function getAvailableSeasonStatKeys(players: Player[]): Set<keyof PlayerSeason> {
+function getAvailableSeasonStatKeys(
+  players: Player[],
+): Set<keyof PlayerSeason> {
   const keys = new Set<keyof PlayerSeason>();
   for (const p of players) {
     for (const s of p.seasons ?? []) {
@@ -156,7 +224,11 @@ function hasAnyStatFilterSet(f: Filters): boolean {
   if (String(f.astG ?? "").trim()) return true;
   if (String(f.ptsG ?? "").trim()) return true;
   if (String(f.fgPercentage ?? "").trim()) return true;
-  if (String(f.minutesG?.from ?? "").trim() || String(f.minutesG?.to ?? "").trim()) return true;
+  if (
+    String(f.minutesG?.from ?? "").trim() ||
+    String(f.minutesG?.to ?? "").trim()
+  )
+    return true;
   if (String(f.stlG ?? "").trim()) return true;
   if (String(f.blkG ?? "").trim()) return true;
   if (String(f.threePtPercentage ?? "").trim()) return true;
@@ -171,7 +243,7 @@ function extractUniqueCountries(list: Player[]): string[] {
     parseCountryToArray(player.country).forEach((c) => set.add(c));
   });
   return Array.from(set).sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
 }
 
@@ -200,15 +272,22 @@ const PlayerDatabaseContent = ({
   const [page, setPage] = useState(1);
   const [countries, setCountries] = useState<string[]>([]);
 
-  const { data: leagues = [], isPending: leaguesPending, error: leaguesError } =
-    useQuery<League[]>({
-      queryKey: ["catalog", "leagues"],
-      queryFn: getLeagues,
-    });
+  const {
+    data: leagues = [],
+    isPending: leaguesPending,
+    error: leaguesError,
+  } = useQuery<League[]>({
+    queryKey: ["catalog", "leagues"],
+    queryFn: getLeagues,
+  });
 
   const leagueSelectionKey = useMemo(
-    () => filters.leagues.map((o) => o.value).sort().join(","),
-    [filters.leagues]
+    () =>
+      filters.leagues
+        .map((o) => o.value)
+        .sort()
+        .join(","),
+    [filters.leagues],
   );
 
   const teamsQueryEnabled = leagues.length > 0 && filters.leagues.length > 0;
@@ -224,9 +303,7 @@ const PlayerDatabaseContent = ({
       const toFetch = hasAllLeagues
         ? [filters.leagues.find((o) => o.value === "0")!]
         : filters.leagues;
-      const teamsPromises = toFetch.map((o) =>
-        getTeams(parseInt(o.value, 10))
-      );
+      const teamsPromises = toFetch.map((o) => getTeams(parseInt(o.value, 10)));
       const teamsResults = await Promise.all(teamsPromises);
       return teamsResults.flat();
     },
@@ -268,7 +345,7 @@ const PlayerDatabaseContent = ({
       return getPlayersPageByTeamIds(
         teamIds,
         FIRESTORE_RAW_PAGE_SIZE,
-        pageParam as string | null
+        pageParam as string | null,
       );
     },
     initialPageParam: null as string | null,
@@ -295,7 +372,7 @@ const PlayerDatabaseContent = ({
     : playersListQuery.error;
 
   const catalogError =
-    leaguesError ?? teamsError ?? playersError
+    (leaguesError ?? teamsError ?? playersError)
       ? "Failed to load catalog. Try again."
       : null;
 
@@ -365,7 +442,7 @@ const PlayerDatabaseContent = ({
         const meetsStat = (
           seasonKey: keyof PlayerSeason,
           filterVal: string,
-          isPercentage: boolean
+          isPercentage: boolean,
         ) => {
           if (!filterVal.trim()) return true;
           let num = parseFloat(filterVal);
@@ -381,7 +458,7 @@ const PlayerDatabaseContent = ({
         const meetsRange = (
           seasonKey: keyof PlayerSeason,
           fromVal?: string,
-          toVal?: string
+          toVal?: string,
         ) => {
           const fromNum = fromVal?.trim() ? parseFloat(fromVal) : null;
           const toNum = toVal?.trim() ? parseFloat(toVal) : null;
@@ -392,22 +469,36 @@ const PlayerDatabaseContent = ({
           return seasons.some((s) => {
             const m = s[seasonKey];
             if (m == null || typeof m !== "number") return false;
-            if (fromNum != null && !Number.isNaN(fromNum) && m < fromNum) return false;
-            if (toNum != null && !Number.isNaN(toNum) && m > toNum) return false;
+            if (fromNum != null && !Number.isNaN(fromNum) && m < fromNum)
+              return false;
+            if (toNum != null && !Number.isNaN(toNum) && m > toNum)
+              return false;
             return true;
           });
         };
         for (const cfg of STAT_FILTER_CONFIG) {
           if (cfg.isRange) {
-            const range = filters[cfg.filterKey] as { from?: string; to?: string } | undefined;
+            const range = filters[cfg.filterKey] as
+              | { from?: string; to?: string }
+              | undefined;
             const fromVal = range?.from?.trim();
             const toVal = range?.to?.trim();
             if (fromVal || toVal) {
-              if (!meetsRange(cfg.seasonKey, fromVal || undefined, toVal || undefined)) return false;
+              if (
+                !meetsRange(
+                  cfg.seasonKey,
+                  fromVal || undefined,
+                  toVal || undefined,
+                )
+              )
+                return false;
             }
           } else {
             const filterVal = String(filters[cfg.filterKey] ?? "").trim();
-            if (filterVal && !meetsStat(cfg.seasonKey, filterVal, cfg.isPercentage))
+            if (
+              filterVal &&
+              !meetsStat(cfg.seasonKey, filterVal, cfg.isPercentage)
+            )
               return false;
           }
         }
@@ -422,12 +513,12 @@ const PlayerDatabaseContent = ({
   /** Only show stat filters for stats that exist in the loaded player data. */
   const availableStatKeys = useMemo(
     () => getAvailableSeasonStatKeys(players),
-    [players]
+    [players],
   );
 
   const handleFilterChange = <K extends keyof Filters>(
     filterName: K,
-    newValue: Filters[K]
+    newValue: Filters[K],
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -445,7 +536,7 @@ const PlayerDatabaseContent = ({
   const handleRangeChange = (
     primaryKey: keyof Filters,
     key: "to" | "from",
-    value: string
+    value: string,
   ) => {
     setFilters((prev) => {
       const current = prev[primaryKey];
@@ -472,7 +563,7 @@ const PlayerDatabaseContent = ({
   useEffect(() => {
     if (leagues.length > 0 && filters.leagues.length === 0) {
       const allLeaguesOption = leagues.find(
-        (league) => league.name.toLowerCase() === "all leagues"
+        (league) => league.name.toLowerCase() === "all leagues",
       );
       if (allLeaguesOption) {
         setFilters((prev) => ({
@@ -513,10 +604,26 @@ const PlayerDatabaseContent = ({
     }
   }, [players]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredPlayers.length / PAGE_SIZE)
-  );
+  useEffect(() => {
+    if (leaguesError) {
+      notify.error(toastMessage.catalog.loadLeaguesTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadLeaguesDesc,
+      });
+    } else if (teamsError) {
+      notify.error(toastMessage.catalog.loadTeamsTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadTeamsDesc,
+      });
+    } else if (playersError) {
+      notify.error(toastMessage.catalog.loadPlayersTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadPlayersDesc,
+      });
+    }
+  }, [leaguesError, teamsError, playersError]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(1);
@@ -729,11 +836,7 @@ const PlayerDatabaseContent = ({
       </AccordionContainer>
 
       {/* Stats Filters – only show filters for stats present in the data */}
-      <AccordionContainer
-        type="single"
-        collapsible
-        className="w-full border-0"
-      >
+      <AccordionContainer type="single" collapsible className="w-full border-0">
         <AccordionItem
           value="statsFilters"
           className="border-0 !overflow-hidden"
@@ -744,7 +847,7 @@ const PlayerDatabaseContent = ({
           <AccordionContent className="flex gap-5 !overflow-hidden">
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
               {STAT_FILTER_CONFIG.filter((cfg) =>
-                availableStatKeys.has(cfg.seasonKey)
+                availableStatKeys.has(cfg.seasonKey),
               ).map((cfg) =>
                 cfg.isRange ? (
                   <div key={cfg.filterKey} className="space-y-[10px]">
@@ -752,13 +855,16 @@ const PlayerDatabaseContent = ({
                     <div className="flex items-center gap-5">
                       <Input
                         placeholder="from"
-                        value={(filters[cfg.filterKey] as { from?: string })?.from ?? ""}
+                        value={
+                          (filters[cfg.filterKey] as { from?: string })?.from ??
+                          ""
+                        }
                         type="number"
                         onChange={(e) =>
                           handleRangeChange(
                             cfg.filterKey as "height" | "minutesG",
                             "from",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         className="border-white/50 w-full border-white"
@@ -767,12 +873,14 @@ const PlayerDatabaseContent = ({
                       <Input
                         placeholder="to"
                         type="number"
-                        value={(filters[cfg.filterKey] as { to?: string })?.to ?? ""}
+                        value={
+                          (filters[cfg.filterKey] as { to?: string })?.to ?? ""
+                        }
                         onChange={(e) =>
                           handleRangeChange(
                             cfg.filterKey as "height" | "minutesG",
                             "to",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         className="border-white/50 w-full border-white"
@@ -783,7 +891,9 @@ const PlayerDatabaseContent = ({
                   <div key={cfg.filterKey} className="space-y-[10px]">
                     <h2>{cfg.label}</h2>
                     <Input
-                      placeholder={cfg.isPercentage ? "e.g. 45.5" : `Min ${cfg.label}`}
+                      placeholder={
+                        cfg.isPercentage ? "e.g. 45.5" : `Min ${cfg.label}`
+                      }
                       value={String(filters[cfg.filterKey] ?? "")}
                       type="number"
                       onChange={(e) =>
@@ -792,12 +902,13 @@ const PlayerDatabaseContent = ({
                       className="border-white/50 w-full border-white"
                     />
                   </div>
-                )
+                ),
               )}
             </div>
             {availableStatKeys.size === 0 && (
               <p className="text-sm text-white/70 col-span-2">
-                Load players (select League/Teams) to see stats filters from the data.
+                Load players (select League/Teams) to see stats filters from the
+                data.
               </p>
             )}
           </AccordionContent>
@@ -839,9 +950,7 @@ const PlayerDatabaseContent = ({
       )}
 
       {catalogError && (
-        <div className="bg-red-50 text-red-500 p-4 rounded">
-          {catalogError}
-        </div>
+        <div className="bg-red-50 text-red-500 p-4 rounded">{catalogError}</div>
       )}
 
       {playersTableLoading ? (
@@ -885,19 +994,20 @@ const PlayerDatabaseContent = ({
         </div>
       )}
 
-      {useFirestorePaging && Boolean(teamIdsKey) && playersPagedQuery.hasNextPage && (
-        <div className="mt-4 flex justify-center">
-          <button
-            type="button"
-            disabled={playersPagedQuery.isFetchingNextPage}
-            onClick={() => playersPagedQuery.fetchNextPage()}
-            className="rounded-lg border border-purpleFill/40 bg-purplish/30 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-purplish/50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {playersPagedQuery.isFetchingNextPage ? "Loading…" : "Load more"}
-          </button>
-        </div>
-      )}
-
+      {useFirestorePaging &&
+        Boolean(teamIdsKey) &&
+        playersPagedQuery.hasNextPage && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              disabled={playersPagedQuery.isFetchingNextPage}
+              onClick={() => playersPagedQuery.fetchNextPage()}
+              className="rounded-lg border border-purpleFill/40 bg-purplish/30 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-purplish/50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {playersPagedQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+            </button>
+          </div>
+        )}
     </div>
   );
 };
