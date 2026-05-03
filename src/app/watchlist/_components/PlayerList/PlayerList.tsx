@@ -6,7 +6,12 @@ import { cn } from "@/utils/cn";
 // import { IoMdAdd, IoMdRemove } from "react-icons/io";
 // import Button from "@/components/Button";
 // import { RiPushpin2Fill } from "react-icons/ri";
-import { FBPlayer, notesDB, watchListDB } from "@/_api/firebase-api";
+import {
+  FBPlayer,
+  notesDB,
+  watchListDB,
+  type Note as FirebaseNote,
+} from "@/_api/firebase-api";
 import {
   FaEdit,
   FaRegTrashAlt,
@@ -330,11 +335,16 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
 
   const handleDeleteNote = async (
     event: MouseEvent<HTMLDivElement>,
-    player: FBPlayer
+    note: FirebaseNote
   ) => {
     event.stopPropagation();
+    const firestoreId = note.firestoreId;
+    if (!firestoreId) {
+      console.error("Missing note document id");
+      return;
+    }
     try {
-      await notesDB.remove(player.id);
+      await notesDB.remove(firestoreId);
       refreshPlayers();
     } catch {
       console.error("Error deleting note");
@@ -454,7 +464,7 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
                 player.notes.map((note, index) => (
                   <div
                     className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-[10px]"
-                    key={index}
+                    key={note.firestoreId ?? `${player.id}-${index}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm leading-relaxed text-textGrey">
@@ -465,7 +475,7 @@ const PlayerList: React.FC<Props> = ({ players, refreshPlayers }) => {
                           icon={
                             <FaRegTrashAlt className="text-red-300" size={13} />
                           }
-                          handleClick={(e) => handleDeleteNote(e, player)}
+                          handleClick={(e) => handleDeleteNote(e, note)}
                           tooltip="Delete note"
                         />
                       </TooltipProvider>

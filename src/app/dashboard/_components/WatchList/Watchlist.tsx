@@ -121,6 +121,11 @@ const PlayersTable: FC = () => {
 
   return (
     <div className="mt-8 space-y-5">
+      <header className="border-b border-white/10 pb-4">
+        <h2 className="text-white text-xl font-bold uppercase tracking-wide">
+          Watchlist
+        </h2>
+      </header>
       <Table
         columns={playerColumns}
         data={paginatedPlayers}

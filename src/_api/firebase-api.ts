@@ -96,10 +96,27 @@ const LEAGUE_PLAYER_PROFILE_COLLECTION = "league-player-profile";
 const SCOUTING_REPORT_COLLECTION = "scouting-report";
 
 export interface Note {
+  id: number;
   note: string;
   user: string;
+  /** ISO timestamp — updated whenever the note is saved */
   dateTime: string;
+  /** Denormalized for lists (e.g. latest notes) */
+  playerName?: string;
+  /** Set when loaded from `notesDB.get` — Firestore doc id for `notesDB.remove` */
+  firestoreId?: string;
 }
+
+export type LatestNoteItem = {
+  firestoreId: string;
+  playerId: number;
+  note: string;
+  playerName: string;
+  dateTime: string;
+};
+
+/** Upper bound when listing all of a user’s notes (full `/dashboard/notes` page). Pass to `getLatestForUser`. */
+export const NOTES_USER_LIST_MAX = 200;
 
 export interface FBPlayer extends Player {
   documentId: string;
@@ -304,16 +321,22 @@ export const notesDB = {
     const querySnapshot = await getDocs(q);
     const existingDoc = querySnapshot.docs.find(doc => doc.data().user === userEmail);
 
+    const now = new Date().toISOString();
+    const name = playerName?.trim() || "";
     if (!existingDoc) {
       await addDoc(collection(db, NOTE_COLLECTION), {
         id: playerId,
         note,
         user: userEmail,
+        dateTime: now,
+        ...(name ? { playerName: name } : {}),
       });
     } else {
       const docRef = doc(db, NOTE_COLLECTION, existingDoc.id);
       await updateDoc(docRef, {
         note,
+        dateTime: now,
+        ...(name ? { playerName: name } : {}),
       });
     }
     void logActivity({
@@ -334,7 +357,7 @@ export const notesDB = {
     const querySnapshot = await getDocs(q);
     
     const userNotes = querySnapshot.docs
-      .map((doc) => doc.data() as Note)
+      .map((d) => ({ ...(d.data() as Note), firestoreId: d.id }))
       .filter((note) => note.user === userEmail);
 
     if (userNotes.length > 0) {
@@ -343,21 +366,49 @@ export const notesDB = {
       return undefined;
     }
   },
-  remove: async (playerId: number) => {
+  /** Recent notes for the signed-in user, newest first. Preview: default `6`; full list: {@link NOTES_USER_LIST_MAX}. */
+  getLatestForUser: async (limit = 6): Promise<LatestNoteItem[]> => {
     const userEmail = auth.currentUser?.email;
-    if (!userEmail) return;
-
+    if (!userEmail) return [];
     const q = query(
       collection(db, NOTE_COLLECTION),
-      where("id", "==", playerId)
+      where("user", "==", userEmail)
     );
     const querySnapshot = await getDocs(q);
-    const existingDoc = querySnapshot.docs.find(
-      (doc) => doc.data().user === userEmail
-    );
-    if (!existingDoc) return;
-
-    const docRef = doc(db, NOTE_COLLECTION, existingDoc.id);
+    const rows: LatestNoteItem[] = querySnapshot.docs.map((d) => {
+      const data = d.data() as Partial<Note> & { note?: string };
+      const playerId = typeof data.id === "number" ? data.id : Number(data.id);
+      return {
+        firestoreId: d.id,
+        playerId: Number.isFinite(playerId) ? playerId : 0,
+        note: String(data.note ?? ""),
+        playerName: String(data.playerName ?? "").trim(),
+        dateTime: String(data.dateTime ?? "").trim(),
+      };
+    });
+    const parsed = (s: string) => {
+      const t = Date.parse(s);
+      return Number.isNaN(t) ? null : t;
+    };
+    rows.sort((a, b) => {
+      const ta = parsed(a.dateTime);
+      const tb = parsed(b.dateTime);
+      if (ta == null && tb == null) return 0;
+      if (ta == null) return 1;
+      if (tb == null) return -1;
+      return tb - ta;
+    });
+    return rows.slice(0, limit);
+  },
+  /** Delete a note document; only allowed if it belongs to the signed-in user. */
+  remove: async (firestoreId: string) => {
+    const userEmail = auth.currentUser?.email;
+    if (!userEmail) return;
+    const docRef = doc(db, NOTE_COLLECTION, firestoreId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists) return;
+    const data = snap.data();
+    if (!data || data.user !== userEmail) return;
     await deleteDoc(docRef);
   },
 };

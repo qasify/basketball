@@ -50,7 +50,7 @@ const Banner: React.FC<BannerType> = (
         <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-white tracking-tight">
           Welcome back
           {user ? (
-            <span className="text-whiteLight">, {user.email?.split("@")[0]}</span>
+            <span className="text-whiteLight">, {user.displayName?.split("@")[0]}</span>
           ) : null}
         </h1>
         <p className="text-whiteLight text-sm md:text-base mt-2 mb-6 max-w-md">
