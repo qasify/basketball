@@ -605,11 +605,23 @@ const PlayerDatabaseContent = ({
   }, [players]);
 
   useEffect(() => {
-    if (!catalogError) return;
-    notify.error(toastMessage.catalog.loadPlayersTitle, {
-      description: toastMessage.catalog.loadPlayersDesc,
-    });
-  }, [catalogError]);
+    if (leaguesError) {
+      notify.error(toastMessage.catalog.loadLeaguesTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadLeaguesDesc,
+      });
+    } else if (teamsError) {
+      notify.error(toastMessage.catalog.loadTeamsTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadTeamsDesc,
+      });
+    } else if (playersError) {
+      notify.error(toastMessage.catalog.loadPlayersTitle, {
+        id: "catalog-error",
+        description: toastMessage.catalog.loadPlayersDesc,
+      });
+    }
+  }, [leaguesError, teamsError, playersError]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / PAGE_SIZE));
 

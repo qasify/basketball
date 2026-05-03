@@ -4,13 +4,7 @@ import Button from "@/components/Button";
 import { FaEdit, FaStickyNote } from "react-icons/fa";
 import { Player } from "@/_api/basketball-api";
 import { MouseEvent, useMemo, useState } from "react";
-import { watchListDB } from "@/_api/firebase-api";
-import { notify } from "@/lib/notify";
-import {
-  toastMessage,
-  watchlistAddedDesc,
-  watchlistAlreadyDesc,
-} from "@/utils/constants/toastMessage";
+import { addToWatchlistWithToast } from "@/lib/watchlist-actions";
 import {
   AccordionContainer,
   AccordionContent,
@@ -37,28 +31,8 @@ const PlayerProfile = ({ player }: PlayerProfileModalProps) => {
 
   const handleAddToWatchList = async (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (player) {
-      try {
-        const result = await watchListDB.add(player);
-        if (result === "added") {
-          notify.success(toastMessage.watchlist.addedTitle, {
-            description: watchlistAddedDesc(player.name),
-          });
-        } else if (result === "duplicate") {
-          notify.info(toastMessage.watchlist.alreadyTitle, {
-            description: watchlistAlreadyDesc(player.name),
-          });
-        } else {
-          notify.warning(toastMessage.watchlist.signInTitle, {
-            description: toastMessage.watchlist.signInDesc,
-          });
-        }
-      } catch {
-        notify.error(toastMessage.watchlist.updateErrorTitle, {
-          description: toastMessage.watchlist.updateErrorDesc,
-        });
-      }
-    }
+    if (!player) return;
+    await addToWatchlistWithToast(player);
   };
 
   const TextItem = ({

@@ -9,13 +9,7 @@ import TooltipIconButton from "@/components/TooltipIconButton";
 import { FaEdit, FaStar, FaTrash, FaStickyNote } from "react-icons/fa";
 import { TooltipProvider } from "@/components/Tooltip";
 import Note from "@/components/Note";
-import { watchListDB } from "@/_api/firebase-api";
-import { notify } from "@/lib/notify";
-import {
-  toastMessage,
-  watchlistAddedDesc,
-  watchlistAlreadyDesc,
-} from "@/utils/constants/toastMessage";
+import { addToWatchlistWithToast } from "@/lib/watchlist-actions";
 import { getAuth } from "firebase/auth";
 import { deleteCatalogPlayerAction } from "@/_api/catalog-player-actions";
 import CatalogPlayerEditModal from "../CatalogPlayerEditModal";
@@ -89,26 +83,7 @@ const PlayersTable: FC<PlayerTableProps> = ({ players, catalogCrud }) => {
     player: Player
   ) => {
     event.stopPropagation();
-    try {
-      const result = await watchListDB.add(player);
-      if (result === "added") {
-        notify.success(toastMessage.watchlist.addedTitle, {
-          description: watchlistAddedDesc(player.name),
-        });
-      } else if (result === "duplicate") {
-        notify.info(toastMessage.watchlist.alreadyTitle, {
-          description: watchlistAlreadyDesc(player.name),
-        });
-      } else {
-        notify.warning(toastMessage.watchlist.signInTitle, {
-          description: toastMessage.watchlist.signInDesc,
-        });
-      }
-    } catch {
-      notify.error(toastMessage.watchlist.updateErrorTitle, {
-        description: toastMessage.watchlist.updateErrorDesc,
-      });
-    }
+    await addToWatchlistWithToast(player);
   };
 
   const handleCloseModal = () => {

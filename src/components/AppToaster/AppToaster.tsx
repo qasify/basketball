@@ -12,6 +12,11 @@ import {
 /**
  * Global toast host — violet glass surface (borderPurple / purpleFill) matching app shell.
  * `richColors` is off so panels stay on-brand; semantic tints come from icons + thin rings.
+ *
+ * Maintenance: `classNames` below uses many Tailwind `!` overrides to beat Sonner’s bundled
+ * styles. That ties us to Sonner’s internal markup/CSS specificity — after upgrading `sonner`,
+ * smoke-test all toast variants. If overrides stop working, consider Sonner’s `unstyled` prop
+ * and owning layout entirely in CSS. `sonner` is pinned in package.json so bumps are explicit.
  */
 export default function AppToaster() {
   return (
